@@ -4,11 +4,13 @@ namespace Espo\Custom\Services;
 
 use Espo\Core\ORM\EntityManager;
 use Espo\ORM\Entity;
+use Espo\Custom\Services\RoundRobinLeadService; 
 
 class RoundRobinStatisticsService
 {
     public function __construct(
-        private readonly EntityManager $entityManager
+        private readonly EntityManager $entityManager,
+        private readonly RoundRobinLeadService $roundRobinLeadService,
     ) {}
 
     public function getMemberstats(Entity $roundRobin): array
@@ -28,14 +30,11 @@ class RoundRobinStatisticsService
         $totalLeads = 0;
 
         foreach ($teams as $team) {
-            $leadCount = $this->entityManager
-                ->getRepository('Lead')
-                ->where([
-                    'cCampagneRoundRobinId' => $roundRobin->getId(),
-                    'cTeamId' => $team->getId(),
-                    'cExternalCreatedAt>=' => $roundRobinStartDate,
-                ])
-                ->count();
+            $leadCount = $this->roundRobinLeadService->getLeadCountForTeam(
+                $roundRobin->getId(),
+                $team->getId(),
+                $roundRobinStartDate
+            );
             
             $memberStats[] = [
                 'teamId' => $team->getId(),

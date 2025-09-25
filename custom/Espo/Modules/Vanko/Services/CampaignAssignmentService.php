@@ -10,6 +10,7 @@ use Espo\ORM\EntityManager;
 use Espo\Core\Utils\Log;
 use Espo\Modules\Vanko\Services\Util\EntityFactory;
 use Espo\Modules\Vanko\Services\TeamAssignmentService;
+use Espo\Custom\Services\RoundRobinLeadService; 
 
 /**
  * Handles assigning a Campaign to a Lead and applying RoundRobin logic.
@@ -26,6 +27,7 @@ class CampaignAssignmentService
         private readonly Log $log,
         private readonly EntityFactory $entityFactory,
         private readonly TeamAssignmentService $teamAssignmentService,
+        private readonly RoundRobinLeadService $roundRobinLeadService,
     ) {}
 
     public function assignCampaignByName(Lead $lead, string $campaignName): void
@@ -160,13 +162,11 @@ class CampaignAssignmentService
         $roundRobinId = $roundRobin->getId();
 
         foreach ($activeMembersIds as $memberId) {
-            $count = $this->entityManager->getRepository(self::ENTITY_LEAD)
-                ->where([
-                    'cCampagneRoundRobinId' => $roundRobinId,
-                    'cTeamId' => $memberId,
-                    'cExternalCreatedAt>=' => $roundRobinStart
-                ])
-                ->count();
+            $count = $this->roundRobinLeadService->getLeadCountForTeam(
+                $roundRobinId,
+                $memberId,
+                $roundRobinStart
+            );
             $memberLeadCounts[$memberId] = $count;
         }
 
