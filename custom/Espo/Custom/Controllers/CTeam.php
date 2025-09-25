@@ -8,7 +8,6 @@ use Espo\Core\Exceptions\BadRequest;
 use Espo\Core\Exceptions\NotFound;
 use Espo\Custom\Services\CTeamStatisticsService;
 
-
 class CTeam extends \Espo\Core\Templates\Controllers\Base
 {
     /**
