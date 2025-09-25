@@ -67,7 +67,7 @@ class LeadService
             $this->entityManager->saveEntity(
                 $lead, 
                 [
-                    SaveOption::SKIP_ALL => $lead->isNew(),
+                    'skipAfterSave' => $lead->isNew(),
                 ]
             );
             $this->log->info("Successfully {$action} lead {$lead->getId()} for Vanko ID {$data->contact_id}");
