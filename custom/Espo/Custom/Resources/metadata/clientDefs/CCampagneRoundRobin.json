@@ -23,5 +23,15 @@
             "selectPrimaryFilterName": null
         }
     },
-    "kanbanViewMode": false
+    "kanbanViewMode": false,
+    "bottomPanels": {
+        "detail": [
+            "__APPEND__",
+            {
+                "name": "memberStats",
+                "label": "Round Robin Statistieken",
+                "view": "custom:views/ccampagne-round-robin/panels/member-stats"
+            }
+        ]
+    }
 }
