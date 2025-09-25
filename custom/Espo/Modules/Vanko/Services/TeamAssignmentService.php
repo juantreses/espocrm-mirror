@@ -51,7 +51,7 @@ class TeamAssignmentService
         return $this->assignTeam($lead, $team);
     }
 
-    private function assignTeam(Lead $lead, Entity $team): bool
+    public function assignTeam(Lead $lead, Entity $team): bool
     {
         try {
             $this->entityManager->getRepository('Lead')->getRelation($lead, 'cTeam')->relate($team);
@@ -63,7 +63,7 @@ class TeamAssignmentService
         }
     }
 
-    public function unassignTeam(Lead $lead): void
+    private function unassignTeam(Lead $lead): void
     {
         if (empty($lead->get('cTeamId'))) {
             return;
