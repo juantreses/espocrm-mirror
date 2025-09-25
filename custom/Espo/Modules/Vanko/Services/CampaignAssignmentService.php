@@ -9,6 +9,7 @@ use Espo\ORM\Entity;
 use Espo\ORM\EntityManager;
 use Espo\Core\Utils\Log;
 use Espo\Modules\Vanko\Services\Util\EntityFactory;
+use Espo\Modules\Vanko\Services\TeamAssignmentService;
 
 /**
  * Handles assigning a Campaign to a Lead and applying RoundRobin logic.
@@ -18,11 +19,13 @@ class CampaignAssignmentService
     private const ENTITY_CAMPAIGN = 'Campaign';
     private const ENTITY_CAMPAIGN_ROUNDROBIN = "CCampagneRoundRobin";
     private const ENTITY_LEAD = 'Lead';
+    private const ENTITY_TEAM = 'CTeam';
 
     public function __construct(
         private readonly EntityManager $entityManager,
         private readonly Log $log,
         private readonly EntityFactory $entityFactory,
+        private readonly TeamAssignmentService $teamAssignmentService,
     ) {}
 
     public function assignCampaignByName(Lead $lead, string $campaignName): void
@@ -33,6 +36,24 @@ class CampaignAssignmentService
         }
 
         $this->log->info("Processing Campaign assignment for lead {$lead->getId()} with campaign: {$campaignName}");
+        
+        $campaign = $this->findOrCreateCampaign($lead, $campaignName);
+
+        if ($campaign === null) {
+            return; // Error already logged inside findOrCreateCampaign
+        }
+        
+        if ($lead->get('campaignId') !== $campaign->getId()) {
+            $this->assignCampaign($lead, $campaign);
+        } else {
+            $this->log->info("Lead {$lead->getId()} is already assigned to campaign {$campaignName}.");
+        }
+
+        $this->applyRoundRobinLogic($lead, $campaign);
+    }
+
+    private function findOrCreateCampaign(Lead $lead, string $campaignName): ?Entity
+    {
         $campaign = $this->entityFactory->findOrCreate(
             self::ENTITY_CAMPAIGN,
             $campaignName,
@@ -41,49 +62,39 @@ class CampaignAssignmentService
 
         if ($campaign === null) {
             $this->log->error("Failed to find or create campaign '{$campaignName}' for lead {$lead->getId()}");
-            return;
         }
-        
-        if ($lead->get('campaignId') === $campaign->getId()) {
-            $this->log->info("Lead {$lead->getId()} is already assigned to campaign {$campaignName}.");
-            $this->applyRoundRobinLogic($lead, $campaign);
-            return;
-        }
-
-        $this->assignCampaign($lead, $campaign);
+        return $campaign;
     }
 
     private function assignCampaign(Lead $lead, Entity $campaign): void
     {
         try {
-            $this->entityManager->getRepository('Lead')->getRelation($lead, 'campaign')->relate($campaign);
+            $this->entityManager
+                ->getRepository(self::ENTITY_LEAD)
+                ->getRelation($lead, self::ENTITY_CAMPAIGN)
+                ->relate($campaign);
+
             $this->log->info("Assigned Campaign {$campaign->getId()} to lead {$lead->getId()}");
-            $this->applyRoundRobinLogic($lead, $campaign);
         } catch (\Exception $e) {
             $this->log->error("Failed to assign Campaign {$campaign->getId()} to lead {$lead->getId()}: " . $e->getMessage());
         }
     }
 
+    // ---------------------------------------------------------------------------------
+    // ROUND ROBIN LOGIC
+    // ---------------------------------------------------------------------------------
+
     private function applyRoundRobinLogic(Lead $lead, Entity $campaign): void
     {
         try {
-            $campaignId = $campaign->getId();
-            $centerId = $lead->get('cSlimFitCenterId');
             $teamId = $lead->get('cTeamId');
-            if($teamId){
+            if ($teamId) {
                 $this->log->warning("Cannot apply RoundRobin for lead {$lead->getId()}: already has team: " . $teamId . ".");
                 return;
             }
-            if (!$campaignId || !$centerId) {
-                $this->log->warning("Cannot apply RoundRobin for lead {$lead->getId()}: missing Campaign or SlimFitCenter ID.");
-                return;
-            }
 
-            $roundRobin = $this->entityManager->getRepository(self::ENTITY_CAMPAIGN_ROUNDROBIN)
-                ->where(['campaignId' => $campaignId, 'slimFitCenterId' => $centerId])
-                ->findOne();
-
-            if (!$roundRobin || !$roundRobin->get('roundRobinActief')) {
+            $roundRobin = $this->findActiveRoundRobin($campaign, $lead);
+            if (!$roundRobin) {
                 return;
             }
 
@@ -93,25 +104,75 @@ class CampaignAssignmentService
                 return;
             }
 
-            $memberLeadCounts = [];
-            foreach ($activeMembersIds as $memberId) {
-                $count = $this->entityManager->getRepository(self::ENTITY_LEAD)
-                    ->where([
-                        'cCampagneRoundRobinId' => $roundRobin->getId(),
-                        'cTeamId' => $memberId,
-                        'createdAt >=' => $roundRobin->get('roundRobinStart')
-                    ])
-                    ->count();
-                $memberLeadCounts[$memberId] = $count;
+            $memberToAssignId = $this->getMemberIdWithFewestLeads($roundRobin, $activeMembersIds);
+
+            $team = $this->entityManager->getRepository(self::ENTITY_TEAM)
+                ->where(['id' => $memberToAssignId])
+                ->findOne();
+            
+            if (!$team) {
+                 $this->log->error("Failed to find team entity with ID: {$memberToAssignId}. Cannot assign lead.");
+                 return;
             }
 
-            asort($memberLeadCounts);
-            $memberToAssignId = key($memberLeadCounts);
-            
-            $this->log->info("RoundRobin determined that member (cTeam) {$memberToAssignId} should be assigned to lead {$lead->getId()}.");
-            
+            $this->log->info("RoundRobin determined that member lead {$lead->get('name')} should be assigned to {$team->get('name')}  .");
+
+            $lead->set('cCampagneRoundRobinId', $roundRobin->get('id'));
+            $this->teamAssignmentService->assignTeam($lead, $team);
+
         } catch (\Exception $e) {
             $this->log->error("Failed to apply RoundRobin logic for Campaign {$campaign->getId()} to lead {$lead->getId()}: " . $e->getMessage());
         }
     }
+
+    private function findActiveRoundRobin(Entity $campaign, Lead $lead): ?Entity
+    {
+        $campaignId = $campaign->getId();
+        $centerId = $lead->get('cSlimFitCenterId');
+
+        if (!$campaignId || !$centerId) {
+            $this->log->warning("Cannot find RoundRobin for lead {$lead->getId()}: missing Campaign or SlimFitCenter ID.");
+            return null;
+        }
+
+        $roundRobin = $this->entityManager->getRepository(self::ENTITY_CAMPAIGN_ROUNDROBIN)
+            ->where(['campaignId' => $campaignId, 'slimFitCenterId' => $centerId])
+            ->findOne();
+
+        if (!$roundRobin) {
+            $this->log->warning("Cannot find RoundRobin for campaign {$campaignId} and SFC {$centerId}");
+            return null;
+        }
+
+        if (!$roundRobin->get('roundRobinActief')) {
+            $roundRobinId = $roundRobin->getId();
+            $this->log->warning("Round Robin {$roundRobinId} is not active");
+            return null;
+        }
+
+        return $roundRobin;
+    }
+
+    private function getMemberIdWithFewestLeads(Entity $roundRobin, array $activeMembersIds): ?string
+    {
+        $memberLeadCounts = [];
+        $roundRobinStart = $roundRobin->get('roundRobinStart');
+        $roundRobinId = $roundRobin->getId();
+
+        foreach ($activeMembersIds as $memberId) {
+            $count = $this->entityManager->getRepository(self::ENTITY_LEAD)
+                ->where([
+                    'cCampagneRoundRobinId' => $roundRobinId,
+                    'cTeamId' => $memberId,
+                    'cExternalCreatedAt>=' => $roundRobinStart
+                ])
+                ->count();
+            $memberLeadCounts[$memberId] = $count;
+        }
+
+        asort($memberLeadCounts);
+        
+        return key($memberLeadCounts);
+    }
+
 }
