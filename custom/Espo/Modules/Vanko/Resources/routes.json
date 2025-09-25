@@ -22,5 +22,13 @@
             "controller": "VankoApi",
             "action": "cancelKickstart"
         }
+    },
+    {
+        "route": "/vanko/syncState",
+        "method": "post",
+        "params": {
+            "controller": "VankoApi",
+            "action": "syncState"
+        }
     }
 ]
