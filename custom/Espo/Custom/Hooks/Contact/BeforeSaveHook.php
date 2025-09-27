@@ -15,6 +15,7 @@ class BeforeSaveHook implements BeforeSave
         'cSlimFitCenter',
         'cTeam',
     ];
+    
     public function __construct(
         private readonly Log $log,
         private readonly GroupAssignmentService $groupAssignmentService,

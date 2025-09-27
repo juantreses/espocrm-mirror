@@ -8,7 +8,7 @@
         }
     },
     {
-        "route": "/CCampagneRoundRobin/{id}/member-stats",
+        "route": "/CCampagneRoundRobin/:id/member-stats",
         "method": "GET",
         "params": {
             "controller": "CCampagneRoundRobin",

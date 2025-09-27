@@ -16,12 +16,12 @@ class CCampagneRoundRobin extends Base
      */
     public function actionMemberStats(Request $request, Response $response): array
     {
-        $roundRobinId = $request->getRouteParam('id');
+        $id = $request->getRouteParam('id');
         
-        $roundRobin = $this->getEntityManager()->getEntity('CCampagneRoundRobin', $roundRobinId);
+        $roundRobin = $this->getRecordService()->getEntity($id);
 
         if (!$roundRobin) {
-            throw new NotFound("CCampagneRoundRobin with ID '{$roundRobinId}' not found.");
+            throw new NotFound("CCampagneRoundRobin with ID '{$id}' not found.");
         }
 
         /** @var RoundRobinStatisticsService $statsService */

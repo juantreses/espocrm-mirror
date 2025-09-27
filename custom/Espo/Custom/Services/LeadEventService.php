@@ -6,7 +6,6 @@ namespace Espo\Custom\Services;
 
 use Espo\Core\Exceptions\BadRequest;
 use Espo\Core\Exceptions\NotFound;
-use Espo\Core\Utils\Config;
 use Espo\ORM\EntityManager;
 use Espo\ORM\Entity;
 use Espo\Custom\Enums\CallOutcome;
@@ -64,7 +63,6 @@ class LeadEventService
 
     public function __construct(
         private readonly EntityManager $entityManager,
-        private readonly Config $config
     ) {}
 
     public function logEvent(string $leadId, LeadEventType $eventType, ?string $eventDate = null): array
