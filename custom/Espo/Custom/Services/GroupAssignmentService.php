@@ -16,16 +16,22 @@ class GroupAssignmentService
     /**
      * Synchronizes an entity's assigned groups based on a provided list of fields.
      *
-     * @param Entity $entity The entity to process (e.g., a Lead or Contact).
-     * @param string[] $fieldsToWatch An array of field names on the entity to check.
+     * @param Entity $destinationEntity The entity to assign groups to.
+     * @param string[] $fieldsToWatch An array of field names to check for groups.
+     * @param Entity|null $sourceEntity The entity to read group names from. If null, the destinationEntity is used.
      */
-    public function syncGroupsFromFields(Entity $entity, array $fieldsToWatch): void
+    public function syncGroupsFromFields(Entity $destinationEntity, array $fieldsToWatch, ?Entity $sourceEntity = null): void
     {
-        $entityType = $entity->getEntityType();
-        $entityId = $entity->getId();
+        $sourceEntity = $sourceEntity ?? $destinationEntity;
         
-        $this->log->info("Processing group assignments for {$entityType} ID: {$entityId}");
+        $this->log->info("Syncing group assignments for {$destinationEntity->getEntityType()} ID: {$destinationEntity->getId()} from {$sourceEntity->getEntityType()} ID: {$sourceEntity->getId()}");
 
+        $requiredGroupIds = $this->getGroupsFromFields($sourceEntity, $fieldsToWatch);
+        $this->setGroupsForEntity($destinationEntity, $requiredGroupIds);
+    }
+
+    private function getGroupsFromFields(Entity $entity, array $fieldsToWatch): array
+    {
         $requiredGroupIds = [];
         foreach ($fieldsToWatch as $field) {
             $relatedEntity = $entity->get($field);
@@ -37,9 +43,14 @@ class GroupAssignmentService
             }
         }
 
-        $requiredGroupIds = array_unique($requiredGroupIds);
+        return array_unique($requiredGroupIds);
+    }
 
+    private function setGroupsForEntity(Entity $entity, array $requiredGroupIds): void
+    {
         $entity->setLinkMultipleIdList('teams', $requiredGroupIds);
+        $entityType = $entity->getEntityType();
+        $entityId = $entity->getId();
         $this->log->info("Setting group assignments [" . implode(', ', $requiredGroupIds) . "] for {$entityType} ID: {$entityId}");
     }
 

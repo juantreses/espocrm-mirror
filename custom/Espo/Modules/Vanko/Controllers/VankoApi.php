@@ -133,6 +133,10 @@ class VankoApi extends RecordBase
                 throw new BadRequest("Could not find a matching lead with the provided identifiers.");
             }
 
+            if (!in_array($lead->get('status'), ['new', 'assigned'])) {
+                return;
+            }
+
             $entityManager = $this->getEntityManager();
 
             if ($data->CC_SlimFitCenter_GebeldGeenIntresse) {

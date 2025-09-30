@@ -9,9 +9,7 @@
             [
                 {
                     "name": "slimFitCenter"
-                }
-            ],
-            [
+                },
                 {
                     "name": "campaign"
                 }
@@ -19,9 +17,7 @@
             [
                 {
                     "name": "roundRobinActief"
-                }
-            ],
-            [
+                },
                 {
                     "name": "roundRobinStart"
                 }
