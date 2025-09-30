@@ -8,3 +8,4 @@
 .env
 
 /custom/Espo/Modules/*/vendor
+deployment.log
