@@ -1,0 +1,10 @@
+[
+    {
+        "route": "/CTeam/:id/statistics",
+        "method": "GET",
+        "params": {
+            "controller": "CTeam",
+            "action": "statistics"
+        }
+    }
+]
