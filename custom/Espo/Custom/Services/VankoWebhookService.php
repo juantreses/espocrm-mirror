@@ -42,6 +42,8 @@ class VankoWebhookService
         'pcx_25' => 'PCX25',
         'pcx_35' => 'PCX35',
         'distributor' => 'Distributeur',
+        'spark_trail' => 'Spark Proefperiode',
+        'spark_subscription' => 'Spark Subscription',
     ];
 
     public function __construct(
