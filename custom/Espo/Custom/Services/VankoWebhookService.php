@@ -9,7 +9,6 @@ use Espo\Core\Utils\Config;
 use Espo\Custom\Traits\WebhookTrait;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityManager;
-use Espo\ORM\Repository\Option\SaveOption;
 
 /**
  * Service for handling Vanko webhook operations.
