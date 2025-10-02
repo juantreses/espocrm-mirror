@@ -1,3 +1,0 @@
-{
-    "beforeSaveCustomScript": "spierPercentage = kilogramSpieren / gewicht * 100;"
-}
