@@ -28,7 +28,7 @@ class VankoWebhookService
         'cTeam',
         'cTypeKlant',
         'cTeamId',
-        'cSlimFitCenter'
+        'cSlimFitCenterId'
     ];
     
     private const CLIENT_TYPE_MAPPING = [
