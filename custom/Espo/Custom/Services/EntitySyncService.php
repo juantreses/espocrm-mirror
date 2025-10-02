@@ -16,7 +16,7 @@ class EntitySyncService {
         'lastName',
         'emailAddress',
         'phoneNumber',
-        //'cTeamId',
+        'cTeamId',
         'cSlimFitCenterId'
     ];
     
