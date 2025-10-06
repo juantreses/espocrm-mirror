@@ -19,15 +19,15 @@
             ],
             [
                 {
-                    "name": "botmassa"
+                    "name": "vochtpercentage"
                 },
                 {
-                    "name": "vochtpercentage"
+                    "name": "spiermassa"
                 }
             ],
             [
                 {
-                    "name": "spiermassa"
+                    "name": "botmassa"
                 },
                 {
                     "name": "lichaamstype"
