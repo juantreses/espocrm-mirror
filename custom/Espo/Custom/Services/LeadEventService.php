@@ -190,7 +190,7 @@ class LeadEventService
         }
 
         $eventIds = [];
-        foreach (self::KICKSTART_OUTCOME_EVENT_MAP[$outcome->value] as $eventType) {
+        foreach (self::KICKSTART_FOLLOW_UP_OUTCOME_EVENT_MAP[$outcome->value] as $eventType) {
             $eventIds[] = $this->logEvent($leadId, $eventType, $eventDate)['eventId'];
         }
 
