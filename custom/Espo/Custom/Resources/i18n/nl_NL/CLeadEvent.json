@@ -19,7 +19,8 @@
             "became_client": "Opgestart",
             "not_converted": "Niet opgestart",
             "became_coach": "Coach geworden",
-            "still_thinking": "Twijfel KS"
+            "still_thinking": "Twijfel KS",
+            "appointment_rescheduled": "Opnieuw Gepland KS"
         }
     }
 }

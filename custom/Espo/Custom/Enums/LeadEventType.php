@@ -24,6 +24,7 @@ enum LeadEventType: string
     case NOT_CONVERTED = 'not_converted';
     case STILL_THINKING = 'still_thinking';
     case APPOINTMENT_CANCELLED = 'appointment_cancelled';
+    case APPOINTMENT_RESCHEDULED = 'appointment_rescheduled';
 
     //Coach events
     case BECAME_COACH = 'became_coach';
@@ -49,6 +50,7 @@ enum LeadEventType: string
             self::NOT_CONVERTED => 'Not Converted',
             self::STILL_THINKING => 'Still thinking',
             self::APPOINTMENT_CANCELLED => 'Appointment Cancelled',
+            self::APPOINTMENT_RESCHEDULED => 'Appointment Rescheduled',
             //Coach events
             self::BECAME_COACH => 'Became Coach',
         };

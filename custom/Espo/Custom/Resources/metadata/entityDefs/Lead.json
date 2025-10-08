@@ -11,67 +11,6 @@
         "cSlimFitCenter": {
             "type": "link"
         },
-        "status": {
-            "options": [
-                "new",
-                "assigned",
-                "call_again",
-                "wrong_number",
-                "not_interested",
-                "message_to_be_sent",
-                "message_sent",
-                "invited",
-                "appointment_booked",
-                "attended",
-                "no_show",
-                "still_thinking",
-                "appointment_cancelled",
-                "not_converted",
-                "became_client",
-                "became_coach",
-                "Converted"
-            ],
-            "style": {
-                "new": null,
-                "assigned": null,
-                "call_again": null,
-                "wrong_number": null,
-                "not_interested": null,
-                "message_to_be_sent": null,
-                "message_sent": null,
-                "invited": null,
-                "appointment_booked": null,
-                "attended": null,
-                "no_show": null,
-                "still_thinking": null,
-                "appointment_cancelled": null,
-                "not_converted": null,
-                "became_client": null,
-                "became_coach": null,
-                "Converted": "success"
-            },
-            "required": true,
-            "labelType": null,
-            "default": "new",
-            "notActualOptions": [
-                "Recycled",
-                "Dead",
-                "call_again",
-                "wrong_number",
-                "not_interested",
-                "invited",
-                "appointment_booked",
-                "Converted",
-                "attended",
-                "no_show",
-                "still_thinking",
-                "appointment_cancelled",
-                "became_coach",
-                "not_converted",
-                "message_to_be_sent",
-                "message_sent"
-            ]
-        },
         "cTeam": {
             "type": "link"
         },
@@ -122,6 +61,56 @@
             "maxLength": 100,
             "options": [],
             "isCustom": true
+        },
+        "status": {
+            "options": [
+                "new",
+                "assigned",
+                "call_again",
+                "message_to_be_sent",
+                "message_sent",
+                "invited",
+                "appointment_booked",
+                "appointment_rescheduled",
+                "appointment_cancelled",
+                "still_thinking",
+                "became_client",
+                "Converted",
+                "Dead"
+            ],
+            "default": "new",
+            "style": {
+                "new": null,
+                "assigned": null,
+                "call_again": null,
+                "message_to_be_sent": null,
+                "message_sent": null,
+                "invited": null,
+                "appointment_booked": null,
+                "appointment_rescheduled": null,
+                "appointment_cancelled": null,
+                "still_thinking": null,
+                "became_client": null,
+                "Converted": "success",
+                "Dead": "info"
+            },
+            "labelType": null,
+            "notActualOptions": [
+                "Converted",
+                "Recycled",
+                "Dead",
+                "new",
+                "assigned",
+                "call_again",
+                "message_to_be_sent",
+                "message_sent",
+                "invited",
+                "appointment_booked",
+                "appointment_rescheduled",
+                "appointment_cancelled",
+                "still_thinking"
+            ],
+            "required": true
         }
     },
     "collection": {

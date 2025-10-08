@@ -51,7 +51,6 @@ class LeadEventService
         LeadEventType::NOT_INTERESTED->value => LeadEventType::NOT_INTERESTED->value,
         LeadEventType::INVITED->value => LeadEventType::INVITED->value,
         LeadEventType::APPOINTMENT_BOOKED->value => LeadEventType::APPOINTMENT_BOOKED->value,
-        LeadEventType::ATTENDED->value => LeadEventType::ATTENDED->value,
         LeadEventType::APPOINTMENT_CANCELLED->value => LeadEventType::APPOINTMENT_CANCELLED->value,
         LeadEventType::BECAME_CLIENT->value => LeadEventType::BECAME_CLIENT->value,
         LeadEventType::NOT_CONVERTED->value => LeadEventType::NOT_CONVERTED->value,

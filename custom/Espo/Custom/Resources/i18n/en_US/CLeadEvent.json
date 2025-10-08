@@ -25,7 +25,8 @@
             "no_answer": "Geen antwoord",
             "message_to_be_sent": "Bericht Sturen",
             "message_sent": "Bericht Verstuurd",
-            "still_thinking": "Twijfel KS"
+            "still_thinking": "Twijfel KS",
+            "appointment_rescheduled": "Opnieuw Gepland KS"
         }
     },
     "links": {

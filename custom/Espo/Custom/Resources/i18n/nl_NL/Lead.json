@@ -20,39 +20,25 @@
         "cCampagneRoundRobin": "Campagne Round Robin"
     },
     "options": {
-        "status": {
-            "New": "Nieuw",
-            "Assigned": "Toegewezen",
-            "In Process": "In behandeling",
-            "Contact": "Contact",
-            "Later Terug Bellen": "Later Terug Bellen",
-            "KickStart Ingeplanned": "KickStart Ingeplanned",
-            "Converted": "Geconverteerd",
-            "Verkeerd Nummer": "Verkeerd Nummer",
-            "Geen Interesse": "Geen Interesse",
-            "Recycled": "Opnieuw verwerkt",
-            "Dead": "Vervallen",
-            "new": "Nieuw",
-            "assigned": "Toegewezen",
-            "call_again": "Opnieuw bellen",
-            "wrong_number": "Verkeerd nummer",
-            "not_interested": "Geen interesse (Telefoon)",
-            "invited": "Uitgenodigd KS",
-            "appointment_booked": "Ingepland KS",
-            "attended": "Aanwezig KS",
-            "no_show": "Niet opgedaagd KS",
-            "still_thinking": "Twijfel KS",
-            "appointment_cancelled": "Geannuleerd KS",
-            "not_converted": "Geen klant geworden",
-            "became_coach": "Coach geworden",
-            "message_to_be_sent": "Bericht Sturen",
-            "message_sent": "Bericht Gestuurd",
-            "became_client": "Klant geworden"
-        },
         "salutationName": {
             "": "",
             "Mr.": "Dhr.",
             "Mrs.": "Mevr."
+        },
+        "status": {
+            "new": "Nieuw",
+            "assigned": "Toegewezen",
+            "call_again": "Opnieuw  bellen",
+            "message_to_be_sent": "Bericht sturen",
+            "message_sent": "Bericht Gestuurd",
+            "invited": "Uitgenodigd KS",
+            "appointment_booked": "Ingepland KS",
+            "appointment_rescheduled": "Opnieuw Ingepland KS",
+            "appointment_cancelled": "Geannuleerd KS",
+            "still_thinking": "Twijfel KS",
+            "became_client": "Klant Geworden",
+            "Converted": "Geconverteerd",
+            "Dead": "Vervallen"
         }
     }
 }
