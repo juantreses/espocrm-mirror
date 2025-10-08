@@ -41,20 +41,26 @@ define('custom:views/lead/modals/log-message-outcome', ['views/modal'], function
 			const callAgainDateTime = this.$el.find('[name="callAgainDateTime"]').val();
 			const coachNote = this.$el.find('[name="coachNote"]').val();
 
+			const saveButton = this.$el.find('button[data-name="save"]');
+            saveButton.prop('disabled', true);
+
 			if (!outcome) {
                 Espo.Ui.error('Selecteer een uitkomst.');
+				saveButton.prop('disabled', false);
                 return;
             }
 
             if (outcome === 'call_again' && !callAgainDateTime) {
 				if (!callAgainDateTime) {
                     Espo.Ui.error('Datum/tijd opnieuw bellen is verplicht.');
+					saveButton.prop('disabled', false);
                     return;
                 }
                 const now = new Date();
                 const callAgainDate = new Date(callAgainDateTime);
                 if (callAgainDate <= now) {
                     Espo.Ui.error('Datum/tijd opnieuw bellen moet in de toekomst zijn.');
+					saveButton.prop('disabled', false);
                     return;
                 }
 			}
@@ -69,6 +75,7 @@ define('custom:views/lead/modals/log-message-outcome', ['views/modal'], function
 				this.close();
 			}).catch(() => {
 				Espo.Ui.error('Bericht uitkomst opslaan mislukt.');
+				saveButton.prop('disabled', false);
 			});
 		}
 	});

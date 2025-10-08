@@ -25,8 +25,12 @@ define('custom:views/lead/modals/log-kickstart-follow-up', ['views/modal'], func
 			const coachNote = this.$el.find('[name="coachNote"]').val();
 			const followUpDateTime = this.$el.find('[name="followUpDateTime"]').val();
 
+            const saveButton = this.$el.find('button[data-name="save"]');
+            saveButton.prop('disabled', true);
+
 			if (!outcome) {
                 Espo.Ui.error('Selecteer een uitkomst.');
+				saveButton.prop('disabled', false);
                 return;
             }
 
@@ -35,6 +39,7 @@ define('custom:views/lead/modals/log-kickstart-follow-up', ['views/modal'], func
                 const ksDate = new Date(followUpDateTime);
                 if (ksDate > now) {
                     Espo.Ui.error('Datum/tijd van opvolging mag niet in de toekomst zijn.');
+					saveButton.prop('disabled', false);
                     return;
                 }
             }
@@ -49,6 +54,7 @@ define('custom:views/lead/modals/log-kickstart-follow-up', ['views/modal'], func
 				this.close();
 			}).catch(() => {
 				Espo.Ui.error('KS Opvolging opslaan mislukt.');
+				saveButton.prop('disabled', false);
 			});
 		}
 	});

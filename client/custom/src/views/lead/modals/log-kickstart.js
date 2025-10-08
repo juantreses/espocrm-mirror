@@ -44,20 +44,26 @@ define('custom:views/lead/modals/log-kickstart', ['views/modal'], function (Dep)
             const callAgainDateTime = this.$el.find('[name="callAgainDateTime"]').val();
             const coachNote = this.$el.find('[name="coachNote"]').val();
 
+            const saveButton = this.$el.find('button[data-name="save"]');
+            saveButton.prop('disabled', true);
+
             if (!outcome) {
                 Espo.Ui.error('Selecteer een uitkomst.');
+                saveButton.prop('disabled', false);
                 return;
             }
 
             if (outcome === 'still_thinking' && !callAgainDateTime) {
 				if (!callAgainDateTime) {
                     Espo.Ui.error('Datum/tijd opnieuw bellen is verplicht.');
+                    saveButton.prop('disabled', false);
                     return;
                 }
                 const now = new Date();
                 const callAgainDate = new Date(callAgainDateTime);
                 if (callAgainDate <= now) {
                     Espo.Ui.error('Datum/tijd opnieuw bellen moet in de toekomst zijn.');
+                    saveButton.prop('disabled', false);
                     return;
                 }
 			}
@@ -67,6 +73,7 @@ define('custom:views/lead/modals/log-kickstart', ['views/modal'], function (Dep)
                 const ksDate = new Date(kickstartDateTime);
                 if (ksDate > now) {
                     Espo.Ui.error('Datum/tijd van kickstart mag niet in de toekomst zijn.');
+                    saveButton.prop('disabled', false);
                     return;
                 }
             }
@@ -82,6 +89,7 @@ define('custom:views/lead/modals/log-kickstart', ['views/modal'], function (Dep)
                 this.close();
             }).catch(() => {
                 Espo.Ui.error('Failed to log kickstart');
+                saveButton.prop('disabled', false);
             });
         }
     });
