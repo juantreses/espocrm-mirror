@@ -34,6 +34,23 @@
                                 "value": "68bf0fee4f5d77e68"
                             }
                         ]
+                    },
+                    {
+                        "type": "or",
+                        "value": [
+                            {
+                                "type": "notContains",
+                                "attribute": "$user.teamsIds",
+                                "data": {
+                                    "field": "teams",
+                                    "values": {
+                                        "linkName": "SEC-Admin",
+                                        "linkId": "68cbf30d9582059c2"
+                                    }
+                                },
+                                "value": "68cbf30d9582059c2"
+                            }
+                        ]
                     }
                 ]
             }
