@@ -36,8 +36,8 @@ class LeadFactory
         ],
 
         // Question Mapping
-        'vraag1' => ['Ik selecteer per week 10 mensen voor één van onze gratis en vrijblijvende ervaringen in ons SFC. Welke zou jij het liefste volgen?']
-        
+        'cVraag01' => ['Ik selecteer per week 10 mensen voor één van onze gratis en vrijblijvende ervaringen in ons SFC. Welke zou jij het liefste volgen?']
+
     ];
 
     public function __construct(
