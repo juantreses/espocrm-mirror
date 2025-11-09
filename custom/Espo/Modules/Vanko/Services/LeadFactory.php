@@ -109,7 +109,7 @@ class LeadFactory
         foreach (self::FIELD_MAPPING as $espoField => $sourceFields) {
             foreach ($sourceFields as $vankoField) {
                 if (isset($data->$vankoField) && trim((string) $data->$vankoField) !== '') {
-                    $lead->set($espoField, trim((string)$data->$vankoField));
+                    $lead->set($espoField, $data->$vankoField);
                     break;
                 }
             }
