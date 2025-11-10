@@ -37,21 +37,16 @@ class CampaignAssignmentService
             $this->log->info("No campaign name provided for lead {$lead->getId()}, skipping assignment.");
             return;
         }
-
         $this->log->info("Processing Campaign assignment for lead {$lead->getId()} with campaign: {$campaignName}");
-        
         $campaign = $this->findOrCreateCampaign($lead, $campaignName);
-
         if ($campaign === null) {
             return; // Error already logged inside findOrCreateCampaign
         }
-        
         if ($lead->get('campaignId') !== $campaign->getId()) {
             $this->assignCampaign($lead, $campaign);
         } else {
             $this->log->info("Lead {$lead->getId()} is already assigned to campaign {$campaignName}.");
         }
-
         $this->applyRoundRobinLogic($lead, $campaign);
     }
 
@@ -72,11 +67,7 @@ class CampaignAssignmentService
     private function assignCampaign(Lead $lead, Entity $campaign): void
     {
         try {
-            $this->entityManager
-                ->getRepository(self::ENTITY_LEAD)
-                ->getRelation($lead, self::ENTITY_CAMPAIGN)
-                ->relate($campaign);
-
+            $lead->set('campaignId',$campaign->getId());
             $this->log->info("Assigned Campaign {$campaign->getId()} to lead {$lead->getId()}");
         } catch (\Exception $e) {
             $this->log->error("Failed to assign Campaign {$campaign->getId()} to lead {$lead->getId()}: " . $e->getMessage());
