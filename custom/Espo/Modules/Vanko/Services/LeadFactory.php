@@ -43,19 +43,28 @@ class LeadFactory
      * including exact spacing and special characters (like non-breaking spaces).
      */
     private const SURVEY_MAPPING = [
+        'Global' => [
+            // Add Commen Questions
+            'Hoe zou je je algemene gezondheid op dit moment beoordelen? (Schaal 1–10)', 
+            'Welke sport oefen je uit?',
+            'Ik selecteer per week 10 mensen voor één van onze gratis en vrijblijvende ervaringen in ons SFC. Welke zou jij het liefste volgen?',
+        ],
         'Sint-Katelijne-Waver' => [
+            // Add Sint-Katelijne-Waver specific questions here
             'Wat had je vanmorgen als ontbijt?',
             // Note: Ensure the dash here matches exactly (en-dash vs hyphen)
-            'Hoe zou je je algemene gezondheid op dit moment beoordelen? (Schaal 1–10)', 
+            'Wil je vrijblijvend meer info over hoe je een centje kan bijvrienden als welzijnscoach? ',
             'Ik geef je 5 gezondheidsresultaten. Stel dat er één vanaf nu zou werken, welke zou je kiezen?',
              // Note: The incoming data might have a non-breaking space (\u00a0) at the end of this question
             'Wil je vrijblijvend meer info over hoe je een centje kan bijvrienden als welzijnscoach? ',
         ],
         'Drongen' => [
             // Add Drongen specific questions here
-             'Andere vraag voor Drongen?',
+             'Welke van deze doelen spreken jou het meest aan?',
+             'Slaap je gemiddeld voldoende (7–9 uur per nacht)?',
+             'Doe je aan sport?',
+             'Hoeveel uur in de week sport je?'
         ],
-
     ];
 
     public function __construct(
