@@ -124,6 +124,14 @@
             "maxLength": 100,
             "options": [],
             "isCustom": true
+        },
+        "cSurveyData": {
+            "type": "text",
+            "rowsMin": 2,
+            "cutHeight": 200,
+            "seeMoreDisabled": true,
+            "readOnly": true,
+            "isCustom": true
         }
     },
     "collection": {
