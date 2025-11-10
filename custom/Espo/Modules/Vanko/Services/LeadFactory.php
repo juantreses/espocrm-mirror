@@ -68,11 +68,13 @@ class LeadFactory
         ],
         'Drongen' => [
             self::Q_HEALTH_SCORE,
-            self::Q_DO_SPORT,       // Specific to Drongen?
-            self::Q_SPORT_HOURS,
             self::Q_GOALS,
             self::Q_SLEEP,
+            self::Q_DO_SPORT,
+            self::Q_SPORT_HOURS,
+            self::Q_SPORT_TYPE,
             self::Q_FREE_EXPERIENCE,
+            self::Q_REMARK,
         ],
     ];
 
