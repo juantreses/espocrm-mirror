@@ -27,6 +27,8 @@ class LeadFactory
     private const Q_DO_SPORT = 'Doe je aan sport?';
     private const Q_SPORT_HOURS = 'Hoeveel uur in de week sport je?';
     private const Q_REMARK = 'Opmerking';
+    private const Q_WhatForSkin = 'Waar wil jij je huid het liefst in verbeteren?';
+    private const Q_WorkshopAvailability = 'Kun je de komende weken op zondagochtend tussen 10.00 en 12.00 meedoen aan de gratis workshop?';
 
     /**
      * Unified field mapping structure that supports both simple and fallback mappings.
@@ -75,6 +77,8 @@ class LeadFactory
             self::Q_SPORT_TYPE,
             self::Q_FREE_EXPERIENCE,
             self::Q_REMARK,
+            self::Q_WhatForSkin,
+            self::Q_WorkshopAvailability,
         ],
     ];
 
@@ -96,11 +100,13 @@ class LeadFactory
 
             // Apply survey data as a JSON string
             $this->applySurveyData($lead, $data);
+
+            // Set a runtime flag to stop the AfterSaveHook from syncing to Vanko just yet
+            $lead->set('suppressVankoSync', true);
             
             $this->entityManager->saveEntity(
                 $lead, 
                 [
-                    'skipAfterSave' => true,
                     SaveOption::KEEP_NEW => true,
                     SaveOption::KEEP_DIRTY => true,
                 ]
