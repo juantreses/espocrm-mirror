@@ -10,35 +10,6 @@
                         "type": "or",
                         "value": [
                             {
-                                "type": "contains",
-                                "attribute": "$user.teamsIds",
-                                "data": {
-                                    "field": "teams",
-                                    "values": {
-                                        "linkName": "SEC-Coach",
-                                        "linkId": "6886142a73c46c9e7"
-                                    }
-                                },
-                                "value": "6886142a73c46c9e7"
-                            },
-                            {
-                                "type": "contains",
-                                "attribute": "$user.teamsIds",
-                                "data": {
-                                    "field": "teams",
-                                    "values": {
-                                        "linkName": "SEC-HeadCoach",
-                                        "linkId": "68bf0fee4f5d77e68"
-                                    }
-                                },
-                                "value": "68bf0fee4f5d77e68"
-                            }
-                        ]
-                    },
-                    {
-                        "type": "or",
-                        "value": [
-                            {
                                 "type": "notContains",
                                 "attribute": "$user.teamsIds",
                                 "data": {
