@@ -64,12 +64,7 @@ class LeadService
 
             $this->handleAssignments($lead, $data);
 
-            $this->entityManager->saveEntity(
-                $lead, 
-                [
-                    'skipAfterSave' => $lead->isNew(),
-                ]
-            );
+            $this->entityManager->saveEntity($lead);
             $this->log->info("Successfully {$action} lead {$lead->getId()} for Vanko ID {$data->contact_id}");
 
             return $this->createResponse(

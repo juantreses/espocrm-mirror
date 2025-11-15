@@ -100,11 +100,13 @@ class LeadFactory
 
             // Apply survey data as a JSON string
             $this->applySurveyData($lead, $data);
+
+            // Set a runtime flag to stop the AfterSaveHook from syncing to Vanko just yet
+            $lead->set('suppressVankoSync', true);
             
             $this->entityManager->saveEntity(
                 $lead, 
                 [
-                    'skipAfterSave' => true,
                     SaveOption::KEEP_NEW => true,
                     SaveOption::KEEP_DIRTY => true,
                 ]
