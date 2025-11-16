@@ -18230,7 +18230,10 @@ define("views/record/edit", ["exports", "views/record/detail"], function (_expor
         this.wait(promise);
 
         // @todo Revise. Possible race condition issues.
-        promise.then(() => super.setupBeforeFinal());
+        promise.then(() => {
+          super.setupBeforeFinal();
+          this.processDynamicLogic();
+        });
       }
       if (this.model.isNew()) {
         this.once('after:render', () => {
@@ -26275,14 +26278,10 @@ define("views/fields/int", ["exports", "views/fields/base", "autonumeric"], func
      * @return {number|null}
      */
     getMinValue() {
-      let minValue = this.model.getFieldParam(this.name, 'min') ?? null;
-      if (minValue != null) {
-        minValue = null;
-      }
       if ('min' in this.params) {
-        minValue = this.params.min;
+        return this.params.min;
       }
-      return minValue;
+      return this.model.getFieldParam(this.name, 'min') ?? null;
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -31408,6 +31407,13 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
      */
     linkClass;
 
+    /**
+     * @protected
+     * @type {string}
+     * @since 9.2.5
+     */
+    foreignNameAttribute;
+
     /** @inheritDoc */
     events = {
       /** @this LinkFieldView */
@@ -31531,6 +31537,7 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
       this.idName = this.name + 'Id';
       this.foreignScope = this.options.foreignScope || this.foreignScope;
       this.foreignScope = this.foreignScope || this.params.entity || this.model.getFieldParam(this.name, 'entity') || this.model.getLinkParam(this.name, 'entity');
+      this.foreignNameAttribute = this.model.getLinkParam(this.name, 'foreignName') ?? this.getMetadata().get(`clientDefs.${this.foreignScope}.nameAttribute`) ?? 'name';
       if ('createDisabled' in this.options) {
         this.createDisabled = this.options.createDisabled;
       }
@@ -31566,11 +31573,11 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
      * @return {Promise|void}
      */
     select(model) {
-      this.$elementName.val(model.get('name') || model.id);
-      this.$elementId.val(model.get('id'));
+      this.$elementName.val(model.get(this.foreignNameAttribute) || model.id);
+      this.$elementId.val(model.id);
       if (this.mode === this.MODE_SEARCH) {
-        this.searchData.idValue = model.get('id');
-        this.searchData.nameValue = model.get('name') || model.id;
+        this.searchData.idValue = model.id;
+        this.searchData.nameValue = model.get(this.foreignNameAttribute) || model.id;
       }
       this.trigger('change');
       this.controlCreateButtonVisibility();
@@ -31732,7 +31739,7 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
       let url = this.foreignScope + '?maxSize=' + this.getAutocompleteMaxCount();
       if (!this.forceSelectAllAttributes) {
         const mandatorySelectAttributeList = this.getMandatorySelectAttributeList();
-        let select = ['id', 'name'];
+        let select = ['id', this.foreignNameAttribute];
         if (mandatorySelectAttributeList) {
           select = select.concat(mandatorySelectAttributeList);
         }
@@ -31913,12 +31920,17 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
     _transformAutocompleteResult(response) {
       const list = [];
       response.list.forEach(item => {
+        const name = item[this.foreignNameAttribute] || item.name || item.id;
+        const attributes = item;
+        if (this.foreignNameAttribute !== 'name') {
+          attributes[this.foreignNameAttribute] = name;
+        }
         list.push({
           id: item.id,
-          name: item.name || item.id,
+          name: name,
           data: item.id,
-          value: item.name || item.id,
-          attributes: item
+          value: name,
+          attributes: attributes
         });
       });
       return list;
@@ -32339,7 +32351,7 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
      */
     selectOneOf(models) {
       models.forEach(model => {
-        this.addLinkOneOf(model.id, model.get('name'));
+        this.addLinkOneOf(model.id, model.get(this.foreignNameAttribute));
       });
     }
   }
@@ -36410,7 +36422,7 @@ define("collection", ["exports", "model", "bullbone", "underscore"], function (_
     parentModel;
 
     /**
-     * @param {Model[]|null} [models] Models.
+     * @param {Model[]|Record<string, *>[]|null} [models] Models.
      * @param {{
      *     entityType?: string,
      *     model?: Model.prototype,
@@ -41421,7 +41433,7 @@ define("views/record/search", ["exports", "view", "helpers/misc/stored-text-sear
       this.$filtersButton.removeClass('btn-default').removeClass('btn-primary').removeClass('btn-danger').removeClass('btn-success').removeClass('btn-info');
       this.$filtersButton.addClass('btn-' + filterStyle);
       presetName = presetName || '';
-      this.$el.find('ul.filter-menu a.preset[data-name="' + presetName + '"]').prepend('<span class="fas fa-check pull-right"></span>');
+      this.$el.find('ul.filter-menu a.preset[data-name="' + presetName + '"]').prepend('<span class="fas fa-check check-icon pull-right"></span>');
     }
     manageBoolFilters() {
       (this.boolFilterList || []).forEach(item => {
@@ -47520,6 +47532,9 @@ define("views/fields/array", ["exports", "views/fields/base", "helpers/reg-exp-p
       if (this.params.allowCustomOptions || !this.params.options) {
         this.allowCustomOptions = true;
       }
+      if (this.params.allowCustomOptions === false) {
+        this.allowCustomOptions = false;
+      }
       if (this.type === 'array') {
         this.validations.push('noInputValue');
       }
@@ -49634,8 +49649,12 @@ define("ui/app-init", ["exports", "jquery"], function (_exports, _jquery) {
         return;
       }
       const $dashletBody = (0, _jquery.default)(target).closest('.dashlet-body');
-      if ($dashletBody.length) {
-        const $body = $dashletBody;
+      const fixPosition = e.target.parentElement.classList.contains('fix-position');
+      if ($dashletBody.length || fixPosition) {
+        let $body = $dashletBody;
+        if (fixPosition) {
+          $body = (0, _jquery.default)(window);
+        }
         (0, _jquery.default)(target).removeClass('dropup');
         const $group = (0, _jquery.default)(target);
         const rect = target.getBoundingClientRect();
@@ -49660,26 +49679,34 @@ define("ui/app-init", ["exports", "jquery"], function (_exports, _jquery) {
           left: left,
           right: 'auto'
         });
-        return;
+
+        //return;
       }
-      if (e.target.parentElement.classList.contains('fix-overflow')) {
-        (0, _jquery.default)(target).removeClass('dropup');
-        const isRight = e.target.classList.contains('pull-right');
-        const $ul = (0, _jquery.default)(e.target.parentElement).find('.dropdown-menu');
-        const rect = e.target.getBoundingClientRect();
-        const parent = $ul.offsetParent().get(0);
-        if (!parent) {
-          return;
-        }
-        const scrollTop = parent === window.document.documentElement ? document.documentElement.scrollTop || document.body.scrollTop : parent.scrollTop;
-        const top = isUp ? rect.top + scrollTop - height : rect.top + scrollTop + e.target.getBoundingClientRect().height;
-        const left = isRight ? rect.left - $ul.outerWidth() + rect.width : rect.left;
-        $ul.css({
-          top: top,
-          left: left,
-          right: 'auto'
-        });
-      }
+
+      /*if (e.target.parentElement.classList.contains('fix-overflow')) {
+          $(target).removeClass('dropup');
+            const isRight = e.target.classList.contains('pull-right');
+            const $ul = $(e.target.parentElement).find('.dropdown-menu');
+            const rect = e.target.getBoundingClientRect();
+            const parent = $ul.offsetParent().get(0);
+            if (!parent) {
+              return;
+          }
+            const scrollTop = parent === window.document.documentElement ?
+              (document.documentElement.scrollTop || document.body.scrollTop) :
+              parent.scrollTop;
+            const top = isUp ?
+              rect.top + scrollTop - height :
+              rect.top + scrollTop + e.target.getBoundingClientRect().height;
+            const left = isRight ?
+              rect.left - $ul.outerWidth() + rect.width:
+              rect.left
+            $ul.css({
+              top: top,
+              left: left,
+              right: 'auto',
+          });
+      }*/
     });
   }
   var _default = _exports.default = uiAppInit;
@@ -50914,6 +50941,11 @@ define("app", ["exports", "backbone", "bullbone", "js-base64", "ui", "utils", "a
         let className = this.metadata.get(`clientDefs.${name}.controller`);
         if (!className) {
           const module = this.metadata.get(`scopes.${name}.module`);
+          if (!/^[A-Za-z0-9]+$/.test(name)) {
+            console.error(`Bad controller name ${name}.`);
+            this.baseController.error404();
+            return;
+          }
           className = _utils.default.composeClassName(module, name, 'controllers');
         }
         this.createController(className, name, callback);
@@ -52487,6 +52519,14 @@ define("views/list-with-categories", ["exports", "views/list"], function (_expor
         await this.actionCollapse();
       }
       Espo.Ui.notify();
+    }
+
+    /**
+     * @protected
+     */
+    async actionFullRefresh() {
+      var _this$nestedCategorie;
+      await Promise.all([super.actionFullRefresh(), (_this$nestedCategorie = this.nestedCategoriesCollection) === null || _this$nestedCategorie === void 0 ? void 0 : _this$nestedCategorie.fetch()]);
     }
   }
   var _default = _exports.default = ListWithCategories;
@@ -90026,7 +90066,7 @@ define("views/lead-capture/fields/field-list", ["exports", "views/fields/array"]
       /** @type {HTMLElement} */
       const item = div.querySelector('.list-group-item');
       const group = document.createElement('div');
-      group.classList.add('btn-group', 'pull-right');
+      group.classList.add('btn-group', 'pull-right', 'item-button');
       const button = document.createElement('button');
       button.classList.add('btn', 'btn-link', 'btn-sm', 'dropdown-toggle');
       button.innerHTML = `<span class="caret"></span>`;
@@ -91873,6 +91913,10 @@ define("views/fields/link-category-tree", ["exports", "views/fields/link"], func
     selectRecordsView = 'views/modals/select-category-tree-records';
     autocompleteDisabled = false;
     getUrl() {
+      if (this.getMetadata().get(`scopes.${this.entityType}.type`) === 'CategoryTree') {
+        // Can be used for the 'parent' field of the category entity type.
+        return super.getUrl();
+      }
       const id = this.model.get(this.idName);
       if (!id) {
         return null;
@@ -100656,7 +100700,33 @@ define("views/email/fields/email-address-varchar", ["exports", "views/fields/bas
       }
       return true;
     }
+
+    /**
+     *
+     * @param {string} address
+     * @param {string} name
+     * @param {string} [type]
+     * @param {string} [id]
+     */
     addAddress(address, name, type, id) {
+      if (name === '') {
+        const nameHash = this.model.attributes.nameHash ?? {};
+        if (address in nameHash) {
+          name = nameHash[address];
+        }
+      }
+      if (type === undefined) {
+        const typeHash = this.model.attributes.typeHash ?? {};
+        if (address in typeHash) {
+          type = typeHash[address];
+        }
+      }
+      if (id === undefined) {
+        const idHash = this.model.attributes.idHash ?? {};
+        if (address in idHash) {
+          id = idHash[address];
+        }
+      }
       if (this.justAddedAddress) {
         this.deleteAddress(this.justAddedAddress);
       }
@@ -100701,7 +100771,7 @@ define("views/email/fields/email-address-varchar", ["exports", "views/fields/bas
         if (type === 'User' && id) {
           avatarHtml = this.getHelper().getAvatarHtml(id, 'small', 18, 'avatar-link');
         }
-        $text.append($('<span>').text(name), ' ', $('<span>').addClass('text-muted middle-dot'), ' ');
+        $text.append($('<span>').text(name), '<span class="no-select"> </span>', $('<span>').addClass('text-muted middle-dot'), '<span class="no-select"> </span>');
       }
       $text.append($('<span>').text(address));
       const $div = $('<div>').attr('data-address', address).addClass('list-group-item').append(avatarHtml, $('<a>').attr('data-address', address).attr('role', 'button').attr('tabindex', '0').attr('data-action', 'clearAddress').addClass('pull-right').append($('<span>').addClass('fas fa-times')), $text);
