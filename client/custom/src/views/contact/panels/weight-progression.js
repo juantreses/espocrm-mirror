@@ -567,7 +567,7 @@ define([
                             {
                                 label: 'Visceraal vet',
                                 data: visceraalVet,
-                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderColor: 'rgba(255, 205, 86, 1)',
                                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
                                 yAxisID: 'y2',
                                 tension: 0.1,
