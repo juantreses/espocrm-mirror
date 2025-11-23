@@ -16,7 +16,7 @@ class VankoApi extends RecordBase
         $logData = [
             'timestamp' => date('Y-m-d H:i:s'),
             'params' => $params,
-            'data' => $data,
+            'data' => json_encode($data),
         ];
         file_put_contents('test.txt', print_r($logData, true) . "\n\n", FILE_APPEND);
         
