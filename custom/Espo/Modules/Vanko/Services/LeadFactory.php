@@ -178,13 +178,29 @@ class LeadFactory
     private function extractSurveyData(object $data): object
     {
         $surveyData = [];
-        $center = $data->CC_SlimFitCenter ?? 'default';
-        $questionsToExtract = self::SURVEY_MAPPING[$center] ?? self::SURVEY_MAPPING['default'];
+        
+        $center = isset($data->CC_SlimFitCenter) ? trim((string)$data->CC_SlimFitCenter) : '';
+
+        if ($center !== '' && array_key_exists($center, self::SURVEY_MAPPING)) {
+            $questionsToExtract = self::SURVEY_MAPPING[$center];
+        } else {
+            // Scenario B: Center is missing/unknown -> Look for ALL known questions
+            // We merge all arrays in SURVEY_MAPPING and remove duplicates
+            $allQuestions = [];
+            foreach (self::SURVEY_MAPPING as $centerQuestions) {
+                $allQuestions = array_merge($allQuestions, $centerQuestions);
+            }
+            $questionsToExtract = array_unique($allQuestions);
+        }
 
         foreach ($questionsToExtract as $questionKey) {
             if (property_exists($data, $questionKey)) {
-                 // Use the exact question key from mapping so we don't rely on varying input keys
                 $answer = $data->$questionKey;
+                
+                if ($answer === '' || $answer === null) {
+                    continue;
+                }
+
                 if (is_array($answer)) {
                     $surveyData[$questionKey] = implode(', ', $answer);
                 } else {
