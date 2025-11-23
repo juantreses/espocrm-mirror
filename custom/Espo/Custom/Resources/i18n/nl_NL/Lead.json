@@ -28,17 +28,18 @@
         "status": {
             "new": "Nieuw",
             "assigned": "Toegewezen",
-            "call_again": "Opnieuw  bellen",
-            "message_to_be_sent": "Bericht sturen",
+            "call_again": "Opnieuw bellen",
+            "message_to_be_sent": "Bericht Sturen",
             "message_sent": "Bericht Gestuurd",
-            "invited": "Uitgenodigd KS",
-            "appointment_booked": "Ingepland KS",
+            "invited": "Uitgenodigd",
+            "appointment_booked": "Ingepland",
             "appointment_rescheduled": "Opnieuw Ingepland KS",
-            "appointment_cancelled": "Geannuleerd KS",
-            "still_thinking": "Twijfel KS",
-            "became_client": "Klant Geworden",
+            "appointment_cancelled": "Geannuleerd",
+            "still_thinking": "Twijfel",
+            "became_client": "Klant geworden",
             "Converted": "Geconverteerd",
-            "Dead": "Vervallen"
+            "Dead": "Vervallen",
+            "Disqualified": "Vervallen"
         }
     }
 }

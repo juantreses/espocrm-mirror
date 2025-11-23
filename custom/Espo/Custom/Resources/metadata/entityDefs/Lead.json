@@ -71,12 +71,11 @@
                 "message_sent",
                 "invited",
                 "appointment_booked",
-                "appointment_rescheduled",
                 "appointment_cancelled",
                 "still_thinking",
                 "became_client",
                 "Converted",
-                "Dead"
+                "Disqualified"
             ],
             "default": "new",
             "style": {
@@ -87,12 +86,11 @@
                 "message_sent": null,
                 "invited": null,
                 "appointment_booked": null,
-                "appointment_rescheduled": null,
                 "appointment_cancelled": null,
                 "still_thinking": null,
-                "became_client": null,
+                "became_client": "info",
                 "Converted": "success",
-                "Dead": "info"
+                "Disqualified": "danger"
             },
             "labelType": null,
             "notActualOptions": [
