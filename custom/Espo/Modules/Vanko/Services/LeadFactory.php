@@ -105,11 +105,7 @@ class LeadFactory
             $lead->set('suppressVankoSync', true);
             
             $this->entityManager->saveEntity(
-                $lead, 
-                [
-                    SaveOption::KEEP_NEW => true,
-                    SaveOption::KEEP_DIRTY => true,
-                ]
+                $lead
             );
 
             $this->log->info("Successfully instantiated lead {$lead->getId()} for Vanko ID {$data->contact_id}");
@@ -168,7 +164,20 @@ class LeadFactory
         foreach (self::FIELD_MAPPING as $espoField => $sourceFields) {
             foreach ($sourceFields as $vankoField) {
                 if (isset($data->$vankoField) && trim((string) $data->$vankoField) !== '') {
-                    $lead->set($espoField, trim((string) $data->$vankoField));
+
+                    $value = trim((string) $data->$vankoField);
+
+                    if ($espoField === 'cExternalCreatedAt') {
+                        try {
+                            $dt = new \DateTime($value);
+                            $dt->setTimezone(new \DateTimeZone('UTC')); 
+                            $value = $dt->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $this->log->warning("Failed to parse date for field $espoField: $value");
+                        }
+                    }
+
+                    $lead->set($espoField, $value);
                     break;
                 }
             }

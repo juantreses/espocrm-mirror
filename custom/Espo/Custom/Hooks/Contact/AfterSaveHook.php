@@ -19,6 +19,10 @@ class AfterSaveHook implements AfterSave
 
     public function afterSave(Entity $contact, SaveOptions $options): void
     {
+        if ($contact->get('suppressVankoSync')) {
+            return;
+        }
+
         try {
             $this->log->info('Contact After Save Hook triggered for Contact ID: ' . $contact->getId());
             $this->vankoWebhookService->processVankoContact($contact);
