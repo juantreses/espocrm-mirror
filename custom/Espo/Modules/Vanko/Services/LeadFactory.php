@@ -14,6 +14,22 @@ use Espo\ORM\Repository\Option\SaveOption;
  */
 class LeadFactory
 {
+
+    // Pay close attention to exact characters (like the en-dash '–' or non-breaking space ' ').
+    private const Q_HEALTH_SCORE = 'Hoe zou je je algemene gezondheid op dit moment beoordelen? (Schaal 1–10)';
+    private const Q_SPORT_TYPE = 'Welke sport oefen je uit?';
+    private const Q_FREE_EXPERIENCE = 'Ik selecteer per week 10 mensen voor één van onze gratis en vrijblijvende ervaringen in ons SFC. Welke zou jij het liefste volgen?';
+    private const Q_BREAKFAST = 'Wat had je vanmorgen als ontbijt?';
+    private const Q_5_RESULTS = 'Ik geef je 5 gezondheidsresultaten. Stel dat er één vanaf nu zou werken, welke zou je kiezen?';
+    private const Q_COACH_INFO = 'Wil je vrijblijvend meer info over hoe je een centje kan bijvrienden als welzijnscoach? ';
+    private const Q_GOALS = 'Welke van deze doelen spreken jou het meest aan?';
+    private const Q_SLEEP = 'Slaap je gemiddeld voldoende (7–9 uur per nacht)?';
+    private const Q_DO_SPORT = 'Doe je aan sport?';
+    private const Q_SPORT_HOURS = 'Hoeveel uur in de week sport je?';
+    private const Q_REMARK = 'Opmerking';
+    private const Q_WhatForSkin = 'Waar wil jij je huid het liefst in verbeteren?';
+    private const Q_WorkshopAvailability = 'Kun je de komende weken op zondagochtend tussen 10.00 en 12.00 meedoen aan de gratis workshop?';
+
     /**
      * Unified field mapping structure that supports both simple and fallback mappings.
      * For simple mappings, use a single-element array.
@@ -34,6 +50,36 @@ class LeadFactory
             'CC_SlimFitCenter_Campagne_Registratie', // Primary field
             'date_created',                         // Backup field
         ],
+
+    ];
+
+    /**
+     * Mapping of SlimFit Centers to their specific survey questions.
+     * Keys must match EXACTLY what is in the incoming JSON data, 
+     * including exact spacing and special characters (like non-breaking spaces).
+     */
+    private const SURVEY_MAPPING = [
+        'Sint-Katelijne-Waver' => [
+            self::Q_BREAKFAST,
+            self::Q_HEALTH_SCORE,
+            self::Q_5_RESULTS,
+            self::Q_COACH_INFO,
+            self::Q_SPORT_TYPE,
+            self::Q_FREE_EXPERIENCE,
+            self::Q_REMARK,
+        ],
+        'Drongen' => [
+            self::Q_HEALTH_SCORE,
+            self::Q_GOALS,
+            self::Q_SLEEP,
+            self::Q_DO_SPORT,
+            self::Q_SPORT_HOURS,
+            self::Q_SPORT_TYPE,
+            self::Q_FREE_EXPERIENCE,
+            self::Q_REMARK,
+            self::Q_WhatForSkin,
+            self::Q_WorkshopAvailability,
+        ],
     ];
 
     public function __construct(
@@ -51,14 +97,15 @@ class LeadFactory
             /** @var Lead $lead */
             $lead = $this->entityManager->getEntity('Lead');
             $this->applyDataToLead($lead, $data);
+
+            // Apply survey data as a JSON string
+            $this->applySurveyData($lead, $data);
+
+            // Set a runtime flag to stop the AfterSaveHook from syncing to Vanko just yet
+            $lead->set('suppressVankoSync', true);
             
             $this->entityManager->saveEntity(
-                $lead, 
-                [
-                    'skipAfterSave' => true,
-                    SaveOption::KEEP_NEW => true,
-                    SaveOption::KEEP_DIRTY => true,
-                ]
+                $lead
             );
 
             $this->log->info("Successfully instantiated lead {$lead->getId()} for Vanko ID {$data->contact_id}");
@@ -90,6 +137,18 @@ class LeadFactory
             }
         }
 
+        $currentSurveyJson = $lead->get('cSurveyData') ?? '';
+        $newSurveyData = $this->extractSurveyData($data);
+        $newSurveyJson = empty((array)$newSurveyData) 
+        ? '' 
+        : json_encode($newSurveyData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if ($currentSurveyJson !== $newSurveyJson) {
+            if ($newSurveyJson !== '') {
+                $lead->set('cSurveyData', $newSurveyJson);
+            }
+        }
+
+
         if (empty($updateData)) {
             $this->log->info("No field changes detected for lead {$lead->getId()}");
             return $lead;
@@ -105,11 +164,70 @@ class LeadFactory
         foreach (self::FIELD_MAPPING as $espoField => $sourceFields) {
             foreach ($sourceFields as $vankoField) {
                 if (isset($data->$vankoField) && trim((string) $data->$vankoField) !== '') {
-                    $lead->set($espoField, trim((string) $data->$vankoField));
-                
+
+                    $value = trim((string) $data->$vankoField);
+
+                    if ($espoField === 'cExternalCreatedAt') {
+                        try {
+                            $dt = new \DateTime($value);
+                            $dt->setTimezone(new \DateTimeZone('UTC')); 
+                            $value = $dt->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $this->log->warning("Failed to parse date for field $espoField: $value");
+                        }
+                    }
+
+                    $lead->set($espoField, $value);
                     break;
                 }
             }
+        }
+    }
+
+    private function extractSurveyData(object $data): object
+    {
+        $surveyData = [];
+        
+        $center = isset($data->CC_SlimFitCenter) ? trim((string)$data->CC_SlimFitCenter) : '';
+
+        if ($center !== '' && array_key_exists($center, self::SURVEY_MAPPING)) {
+            $questionsToExtract = self::SURVEY_MAPPING[$center];
+        } else {
+            // Scenario B: Center is missing/unknown -> Look for ALL known questions
+            // We merge all arrays in SURVEY_MAPPING and remove duplicates
+            $allQuestions = [];
+            foreach (self::SURVEY_MAPPING as $centerQuestions) {
+                $allQuestions = array_merge($allQuestions, $centerQuestions);
+            }
+            $questionsToExtract = array_unique($allQuestions);
+        }
+
+        foreach ($questionsToExtract as $questionKey) {
+            if (property_exists($data, $questionKey)) {
+                $answer = $data->$questionKey;
+                
+                if ($answer === '' || $answer === null) {
+                    continue;
+                }
+
+                if (is_array($answer)) {
+                    $surveyData[$questionKey] = implode(', ', $answer);
+                } else {
+                    $surveyData[$questionKey] = trim((string)$answer);
+                }
+            }
+        }
+
+        return (object) $surveyData;
+    }
+
+    private function applySurveyData(Lead $lead, object $data): void
+    {
+        $surveyData = $this->extractSurveyData($data);
+        if (!empty((array)$surveyData)) {
+            // Encode as a pretty-printed string for the TEXT field
+            $jsonString = json_encode($surveyData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            $lead->set('cSurveyData', $jsonString);
         }
     }
 }

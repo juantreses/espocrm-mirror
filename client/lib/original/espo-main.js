@@ -189,6 +189,7 @@ define("view", ["exports", "bullbone"], function (_exports, _bullbone) {
      * @param {module:view~actionHandlerCallback} handler A handler.
      */
     addActionHandler(action, handler) {
+      // The key should be in sync with one in Utils.handleAction.
       const fullAction = `click [data-action="${action}"]`;
       this.events[fullAction] = e => {
         // noinspection JSUnresolvedReference
@@ -1232,6 +1233,10 @@ define("utils", ["exports"], function (_exports) {
           handler[method].call(handler, data, event);
         });
       } else if (typeof view[method] === 'function') {
+        if (view !== null && view !== void 0 && view.events[`click [data-action="${action}"]`]) {
+          // Prevents from firing if a handler is already assigned. Important.
+          return false;
+        }
         view[method].call(view, data, event);
         event.preventDefault();
         event.stopPropagation();
@@ -18225,7 +18230,10 @@ define("views/record/edit", ["exports", "views/record/detail"], function (_expor
         this.wait(promise);
 
         // @todo Revise. Possible race condition issues.
-        promise.then(() => super.setupBeforeFinal());
+        promise.then(() => {
+          super.setupBeforeFinal();
+          this.processDynamicLogic();
+        });
       }
       if (this.model.isNew()) {
         this.once('after:render', () => {
@@ -26270,14 +26278,10 @@ define("views/fields/int", ["exports", "views/fields/base", "autonumeric"], func
      * @return {number|null}
      */
     getMinValue() {
-      let minValue = this.model.getFieldParam(this.name, 'min') ?? null;
-      if (minValue != null) {
-        minValue = null;
-      }
       if ('min' in this.params) {
-        minValue = this.params.min;
+        return this.params.min;
       }
-      return minValue;
+      return this.model.getFieldParam(this.name, 'min') ?? null;
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -31403,6 +31407,13 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
      */
     linkClass;
 
+    /**
+     * @protected
+     * @type {string}
+     * @since 9.2.5
+     */
+    foreignNameAttribute;
+
     /** @inheritDoc */
     events = {
       /** @this LinkFieldView */
@@ -31526,6 +31537,7 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
       this.idName = this.name + 'Id';
       this.foreignScope = this.options.foreignScope || this.foreignScope;
       this.foreignScope = this.foreignScope || this.params.entity || this.model.getFieldParam(this.name, 'entity') || this.model.getLinkParam(this.name, 'entity');
+      this.foreignNameAttribute = this.model.getLinkParam(this.name, 'foreignName') ?? this.getMetadata().get(`clientDefs.${this.foreignScope}.nameAttribute`) ?? 'name';
       if ('createDisabled' in this.options) {
         this.createDisabled = this.options.createDisabled;
       }
@@ -31561,11 +31573,11 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
      * @return {Promise|void}
      */
     select(model) {
-      this.$elementName.val(model.get('name') || model.id);
-      this.$elementId.val(model.get('id'));
+      this.$elementName.val(model.get(this.foreignNameAttribute) || model.id);
+      this.$elementId.val(model.id);
       if (this.mode === this.MODE_SEARCH) {
-        this.searchData.idValue = model.get('id');
-        this.searchData.nameValue = model.get('name') || model.id;
+        this.searchData.idValue = model.id;
+        this.searchData.nameValue = model.get(this.foreignNameAttribute) || model.id;
       }
       this.trigger('change');
       this.controlCreateButtonVisibility();
@@ -31727,7 +31739,7 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
       let url = this.foreignScope + '?maxSize=' + this.getAutocompleteMaxCount();
       if (!this.forceSelectAllAttributes) {
         const mandatorySelectAttributeList = this.getMandatorySelectAttributeList();
-        let select = ['id', 'name'];
+        let select = ['id', this.foreignNameAttribute];
         if (mandatorySelectAttributeList) {
           select = select.concat(mandatorySelectAttributeList);
         }
@@ -31908,12 +31920,17 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
     _transformAutocompleteResult(response) {
       const list = [];
       response.list.forEach(item => {
+        const name = item[this.foreignNameAttribute] || item.name || item.id;
+        const attributes = item;
+        if (this.foreignNameAttribute !== 'name') {
+          attributes[this.foreignNameAttribute] = name;
+        }
         list.push({
           id: item.id,
-          name: item.name || item.id,
+          name: name,
           data: item.id,
-          value: item.name || item.id,
-          attributes: item
+          value: name,
+          attributes: attributes
         });
       });
       return list;
@@ -32334,7 +32351,7 @@ define("views/fields/link", ["exports", "views/fields/base", "helpers/record-mod
      */
     selectOneOf(models) {
       models.forEach(model => {
-        this.addLinkOneOf(model.id, model.get('name'));
+        this.addLinkOneOf(model.id, model.get(this.foreignNameAttribute));
       });
     }
   }
@@ -33800,6 +33817,97 @@ define("helpers/misc/stored-text-search", ["exports"], function (_exports) {
       list.splice(index, 1);
       this.list = list;
       this.storage.set(this.key, this.scope, list);
+    }
+  }
+  _exports.default = _default;
+});
+
+define("helpers/misc/foreign-field", ["exports"], function (_exports) {
+  "use strict";
+
+  Object.defineProperty(_exports, "__esModule", {
+    value: true
+  });
+  _exports.default = void 0;
+  /************************************************************************
+   * This file is part of EspoCRM.
+   *
+   * EspoCRM – Open Source CRM application.
+   * Copyright (C) 2014-2025 EspoCRM, Inc.
+   * Website: https://www.espocrm.com
+   *
+   * This program is free software: you can redistribute it and/or modify
+   * it under the terms of the GNU Affero General Public License as published by
+   * the Free Software Foundation, either version 3 of the License, or
+   * (at your option) any later version.
+   *
+   * This program is distributed in the hope that it will be useful,
+   * but WITHOUT ANY WARRANTY; without even the implied warranty of
+   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   * GNU Affero General Public License for more details.
+   *
+   * You should have received a copy of the GNU Affero General Public License
+   * along with this program. If not, see <https://www.gnu.org/licenses/>.
+   *
+   * The interactive user interfaces in modified source and object code versions
+   * of this program must display Appropriate Legal Notices, as required under
+   * Section 5 of the GNU Affero General Public License version 3.
+   *
+   * In accordance with Section 7(b) of the GNU Affero General Public License version 3,
+   * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
+   ************************************************************************/
+
+  /** @module helpers/misc/foreign-field */
+
+  class _default {
+    /**
+     * @private
+     * @type {string}
+     */
+    entityType;
+
+    /**
+     * @param {module:views/fields/base} view A field view.
+     */
+    constructor(view) {
+      /**
+       * @private
+       * @type {module:views/fields/base}
+       */
+      this.view = view;
+      const metadata = view.getMetadata();
+      const model = view.model;
+      const field = view.params.field;
+      const link = view.params.link;
+      const entityType = metadata.get(['entityDefs', model.entityType, 'links', link, 'entity']) || model.entityType;
+      this.entityType = entityType;
+      const fieldDefs = metadata.get(['entityDefs', entityType, 'fields', field]) || {};
+      const type = fieldDefs.type;
+      const ignoreList = ['default', 'audited', 'readOnly', 'required'];
+
+      /** @private */
+      this.foreignParams = {};
+      view.getFieldManager().getParamList(type).forEach(defs => {
+        const name = defs.name;
+        if (ignoreList.includes(name)) {
+          return;
+        }
+        this.foreignParams[name] = fieldDefs[name] || null;
+      });
+    }
+
+    /**
+     * @return {Object.<string, *>}
+     */
+    getForeignParams() {
+      return Espo.Utils.cloneDeep(this.foreignParams);
+    }
+
+    /**
+     * @return {string}
+     */
+    getEntityType() {
+      return this.entityType;
     }
   }
   _exports.default = _default;
@@ -36314,7 +36422,7 @@ define("collection", ["exports", "model", "bullbone", "underscore"], function (_
     parentModel;
 
     /**
-     * @param {Model[]|null} [models] Models.
+     * @param {Model[]|Record<string, *>[]|null} [models] Models.
      * @param {{
      *     entityType?: string,
      *     model?: Model.prototype,
@@ -41325,7 +41433,7 @@ define("views/record/search", ["exports", "view", "helpers/misc/stored-text-sear
       this.$filtersButton.removeClass('btn-default').removeClass('btn-primary').removeClass('btn-danger').removeClass('btn-success').removeClass('btn-info');
       this.$filtersButton.addClass('btn-' + filterStyle);
       presetName = presetName || '';
-      this.$el.find('ul.filter-menu a.preset[data-name="' + presetName + '"]').prepend('<span class="fas fa-check pull-right"></span>');
+      this.$el.find('ul.filter-menu a.preset[data-name="' + presetName + '"]').prepend('<span class="fas fa-check check-icon pull-right"></span>');
     }
     manageBoolFilters() {
       (this.boolFilterList || []).forEach(item => {
@@ -45138,7 +45246,7 @@ define("views/fields/link-multiple", ["exports", "views/fields/base", "helpers/r
   var _default = _exports.default = LinkMultipleFieldView;
 });
 
-define("views/fields/foreign-enum", ["exports", "views/fields/enum"], function (_exports, _enum) {
+define("views/fields/foreign-enum", ["exports", "views/fields/enum", "helpers/misc/foreign-field"], function (_exports, _enum, _foreignField) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
@@ -45146,6 +45254,7 @@ define("views/fields/foreign-enum", ["exports", "views/fields/enum"], function (
   });
   _exports.default = void 0;
   _enum = _interopRequireDefault(_enum);
+  _foreignField = _interopRequireDefault(_foreignField);
   function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
   /************************************************************************
    * This file is part of EspoCRM.
@@ -45177,59 +45286,41 @@ define("views/fields/foreign-enum", ["exports", "views/fields/enum"], function (
 
   class ForeignEnumFieldView extends _enum.default {
     type = 'foreign';
+
+    /**
+     * @private
+     * @type {string}
+     */
+    foreignEntityType;
+    setup() {
+      const helper = new _foreignField.default(this);
+      const foreignParams = helper.getForeignParams();
+      for (const param in foreignParams) {
+        this.params[param] = foreignParams[param];
+      }
+      this.foreignEntityType = helper.getEntityType();
+      super.setup();
+    }
     setupOptions() {
-      this.params.options = [];
       const field = this.params.field;
       const link = this.params.link;
       if (!field || !link) {
         return;
       }
-      const entityType = this.getMetadata().get(`entityDefs.${this.model.entityType}.links.${link}.entity`);
-      if (!entityType) {
-        return;
-      }
-
-      /**
-       * @type {{
-       *     optionsPath?: string|null,
-       *     optionsReference?: string|null,
-       *     translation?: string|null,
-       *     options?: string[],
-       *     isSorted?: boolean,
-       *     displayAsLabel?: boolean,
-       *     style?: Record,
-       *     labelType?: string,
-       * }}
-       */
-      const fieldDefs = this.getMetadata().get(`entityDefs.${entityType}.fields.${field}`);
-      if (!fieldDefs) {
-        return;
-      }
-      let {
-        optionsPath,
-        optionsReference,
-        translation,
-        options,
-        isSorted,
-        displayAsLabel,
-        style,
-        labelType
-      } = fieldDefs;
+      let optionsPath = this.params.optionsPath;
+      const optionsReference = this.params.optionsReference;
+      let options = this.params.options;
+      const style = this.params.style;
       if (!optionsPath && optionsReference) {
         const [refEntityType, refField] = optionsReference.split('.');
         optionsPath = `entityDefs.${refEntityType}.fields.${refField}.options`;
-        style = this.getMetadata().get(`entityDefs.${refEntityType}.fields.${refField}.style`) ?? {};
       }
       if (optionsPath) {
         options = this.getMetadata().get(optionsPath);
       }
       this.params.options = Espo.Utils.clone(options) ?? [];
-      this.params.translation = translation;
-      this.params.isSorted = isSorted ?? false;
-      this.params.displayAsLabel = displayAsLabel ?? false;
-      this.params.labelType = labelType;
       this.styleMap = style ?? {};
-      const pairs = this.params.options.map(item => [item, this.getLanguage().translateOption(item, field, entityType)]);
+      const pairs = this.params.options.map(item => [item, this.getLanguage().translateOption(item, field, this.foreignEntityType)]);
       this.translatedOptions = Object.fromEntries(pairs);
     }
   }
@@ -47441,6 +47532,9 @@ define("views/fields/array", ["exports", "views/fields/base", "helpers/reg-exp-p
       if (this.params.allowCustomOptions || !this.params.options) {
         this.allowCustomOptions = true;
       }
+      if (this.params.allowCustomOptions === false) {
+        this.allowCustomOptions = false;
+      }
       if (this.type === 'array') {
         this.validations.push('noInputValue');
       }
@@ -49555,8 +49649,12 @@ define("ui/app-init", ["exports", "jquery"], function (_exports, _jquery) {
         return;
       }
       const $dashletBody = (0, _jquery.default)(target).closest('.dashlet-body');
-      if ($dashletBody.length) {
-        const $body = $dashletBody;
+      const fixPosition = e.target.parentElement.classList.contains('fix-position');
+      if ($dashletBody.length || fixPosition) {
+        let $body = $dashletBody;
+        if (fixPosition) {
+          $body = (0, _jquery.default)(window);
+        }
         (0, _jquery.default)(target).removeClass('dropup');
         const $group = (0, _jquery.default)(target);
         const rect = target.getBoundingClientRect();
@@ -49581,26 +49679,34 @@ define("ui/app-init", ["exports", "jquery"], function (_exports, _jquery) {
           left: left,
           right: 'auto'
         });
-        return;
+
+        //return;
       }
-      if (e.target.parentElement.classList.contains('fix-overflow')) {
-        (0, _jquery.default)(target).removeClass('dropup');
-        const isRight = e.target.classList.contains('pull-right');
-        const $ul = (0, _jquery.default)(e.target.parentElement).find('.dropdown-menu');
-        const rect = e.target.getBoundingClientRect();
-        const parent = $ul.offsetParent().get(0);
-        if (!parent) {
-          return;
-        }
-        const scrollTop = parent === window.document.documentElement ? document.documentElement.scrollTop || document.body.scrollTop : parent.scrollTop;
-        const top = isUp ? rect.top + scrollTop - height : rect.top + scrollTop + e.target.getBoundingClientRect().height;
-        const left = isRight ? rect.left - $ul.outerWidth() + rect.width : rect.left;
-        $ul.css({
-          top: top,
-          left: left,
-          right: 'auto'
-        });
-      }
+
+      /*if (e.target.parentElement.classList.contains('fix-overflow')) {
+          $(target).removeClass('dropup');
+            const isRight = e.target.classList.contains('pull-right');
+            const $ul = $(e.target.parentElement).find('.dropdown-menu');
+            const rect = e.target.getBoundingClientRect();
+            const parent = $ul.offsetParent().get(0);
+            if (!parent) {
+              return;
+          }
+            const scrollTop = parent === window.document.documentElement ?
+              (document.documentElement.scrollTop || document.body.scrollTop) :
+              parent.scrollTop;
+            const top = isUp ?
+              rect.top + scrollTop - height :
+              rect.top + scrollTop + e.target.getBoundingClientRect().height;
+            const left = isRight ?
+              rect.left - $ul.outerWidth() + rect.width:
+              rect.left
+            $ul.css({
+              top: top,
+              left: left,
+              right: 'auto',
+          });
+      }*/
     });
   }
   var _default = _exports.default = uiAppInit;
@@ -50835,6 +50941,11 @@ define("app", ["exports", "backbone", "bullbone", "js-base64", "ui", "utils", "a
         let className = this.metadata.get(`clientDefs.${name}.controller`);
         if (!className) {
           const module = this.metadata.get(`scopes.${name}.module`);
+          if (!/^[A-Za-z0-9]+$/.test(name)) {
+            console.error(`Bad controller name ${name}.`);
+            this.baseController.error404();
+            return;
+          }
           className = _utils.default.composeClassName(module, name, 'controllers');
         }
         this.createController(className, name, callback);
@@ -52408,6 +52519,14 @@ define("views/list-with-categories", ["exports", "views/list"], function (_expor
         await this.actionCollapse();
       }
       Espo.Ui.notify();
+    }
+
+    /**
+     * @protected
+     */
+    async actionFullRefresh() {
+      var _this$nestedCategorie;
+      await Promise.all([super.actionFullRefresh(), (_this$nestedCategorie = this.nestedCategoriesCollection) === null || _this$nestedCategorie === void 0 ? void 0 : _this$nestedCategorie.fetch()]);
     }
   }
   var _default = _exports.default = ListWithCategories;
@@ -56202,6 +56321,7 @@ define("views/site/master", ["exports", "view", "jquery", "views/collapsed-modal
         body.dataset[param] = this.getThemeManager().getParam(param);
       }
       body.dataset.isDark = this.getThemeManager().getParam('isDark') ?? false;
+      body.dataset.themeName = this.getThemeManager().getName();
       const footerView = this.getView('footer');
       if (footerView) {
         const html = footerView.$el.html() || '';
@@ -62491,7 +62611,7 @@ define("views/fields/image", ["exports", "views/fields/file"], function (_export
   var _default = _exports.default = ImageFieldView;
 });
 
-define("views/fields/foreign-array", ["exports", "views/fields/array", "views/fields/foreign-enum"], function (_exports, _array, _foreignEnum) {
+define("views/fields/foreign-array", ["exports", "views/fields/array", "views/fields/foreign-enum", "helpers/misc/foreign-field"], function (_exports, _array, _foreignEnum, _foreignField) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
@@ -62500,6 +62620,7 @@ define("views/fields/foreign-array", ["exports", "views/fields/array", "views/fi
   _exports.default = void 0;
   _array = _interopRequireDefault(_array);
   _foreignEnum = _interopRequireDefault(_foreignEnum);
+  _foreignField = _interopRequireDefault(_foreignField);
   function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
   /************************************************************************
    * This file is part of EspoCRM.
@@ -62531,6 +62652,21 @@ define("views/fields/foreign-array", ["exports", "views/fields/array", "views/fi
 
   class ForeignArrayFieldView extends _array.default {
     type = 'foreign';
+
+    /**
+     * @private
+     * @type {string}
+     */
+    foreignEntityType;
+    setup() {
+      const helper = new _foreignField.default(this);
+      const foreignParams = helper.getForeignParams();
+      for (const param in foreignParams) {
+        this.params[param] = foreignParams[param];
+      }
+      this.foreignEntityType = helper.getEntityType();
+      super.setup();
+    }
     setupOptions() {
       _foreignEnum.default.prototype.setupOptions.call(this);
     }
@@ -66185,83 +66321,6 @@ define("ui/timepicker", ["exports", "jquery"], function (_exports, _jquery) {
     }
   }
   var _default = _exports.default = Timepicker;
-});
-
-define("helpers/misc/foreign-field", ["exports"], function (_exports) {
-  "use strict";
-
-  Object.defineProperty(_exports, "__esModule", {
-    value: true
-  });
-  _exports.default = void 0;
-  /************************************************************************
-   * This file is part of EspoCRM.
-   *
-   * EspoCRM – Open Source CRM application.
-   * Copyright (C) 2014-2025 EspoCRM, Inc.
-   * Website: https://www.espocrm.com
-   *
-   * This program is free software: you can redistribute it and/or modify
-   * it under the terms of the GNU Affero General Public License as published by
-   * the Free Software Foundation, either version 3 of the License, or
-   * (at your option) any later version.
-   *
-   * This program is distributed in the hope that it will be useful,
-   * but WITHOUT ANY WARRANTY; without even the implied warranty of
-   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   * GNU Affero General Public License for more details.
-   *
-   * You should have received a copy of the GNU Affero General Public License
-   * along with this program. If not, see <https://www.gnu.org/licenses/>.
-   *
-   * The interactive user interfaces in modified source and object code versions
-   * of this program must display Appropriate Legal Notices, as required under
-   * Section 5 of the GNU Affero General Public License version 3.
-   *
-   * In accordance with Section 7(b) of the GNU Affero General Public License version 3,
-   * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
-   ************************************************************************/
-
-  /** @module helpers/misc/foreign-field */
-
-  class _default {
-    /**
-     * @param {module:views/fields/base} view A field view.
-     */
-    constructor(view) {
-      /**
-       * @private
-       * @type {module:views/fields/base}
-       */
-      this.view = view;
-      const metadata = view.getMetadata();
-      const model = view.model;
-      const field = view.params.field;
-      const link = view.params.link;
-      const entityType = metadata.get(['entityDefs', model.entityType, 'links', link, 'entity']) || model.entityType;
-      const fieldDefs = metadata.get(['entityDefs', entityType, 'fields', field]) || {};
-      const type = fieldDefs.type;
-      const ignoreList = ['default', 'audited', 'readOnly', 'required'];
-
-      /** @private */
-      this.foreignParams = {};
-      view.getFieldManager().getParamList(type).forEach(defs => {
-        const name = defs.name;
-        if (ignoreList.includes(name)) {
-          return;
-        }
-        this.foreignParams[name] = fieldDefs[name] || null;
-      });
-    }
-
-    /**
-     * @return {Object.<string, *>}
-     */
-    getForeignParams() {
-      return Espo.Utils.cloneDeep(this.foreignParams);
-    }
-  }
-  _exports.default = _default;
 });
 
 define("helpers/misc/field-language", ["exports"], function (_exports) {
@@ -75066,13 +75125,13 @@ define("views/user/fields/generate-password", ["exports", "views/fields/base"], 
         this.model.unset('passwordPreview');
       });
       this.strengthParams = this.options.strengthParams || {};
-      this.passwordStrengthLength = this.strengthParams.passwordStrengthLength || this.getConfig().get('passwordStrengthLength');
-      this.passwordStrengthLetterCount = this.strengthParams.passwordStrengthLetterCount || this.getConfig().get('passwordStrengthLetterCount');
-      this.passwordStrengthNumberCount = this.strengthParams.passwordStrengthNumberCount || this.getConfig().get('passwordStrengthNumberCount');
-      this.passwordStrengthSpecialCharacterCount = this.strengthParams.passwordStrengthSpecialCharacterCount || this.getConfig().get('passwordStrengthSpecialCharacterCount');
-      this.passwordGenerateLength = this.strengthParams.passwordGenerateLength || this.getConfig().get('passwordGenerateLength');
-      this.passwordGenerateLetterCount = this.strengthParams.passwordGenerateLetterCount || this.getConfig().get('passwordGenerateLetterCount');
-      this.passwordGenerateNumberCount = this.strengthParams.passwordGenerateNumberCount || this.getConfig().get('passwordGenerateNumberCount');
+      this.passwordStrengthLength = this.strengthParams.passwordStrengthLength ?? this.getConfig().get('passwordStrengthLength') ?? null;
+      this.passwordStrengthLetterCount = this.strengthParams.passwordStrengthLetterCount ?? this.getConfig().get('passwordStrengthLetterCount') ?? null;
+      this.passwordStrengthNumberCount = this.strengthParams.passwordStrengthNumberCount ?? this.getConfig().get('passwordStrengthNumberCount') ?? null;
+      this.passwordStrengthSpecialCharacterCount = this.strengthParams.passwordStrengthSpecialCharacterCount ?? this.getConfig().get('passwordStrengthSpecialCharacterCount') ?? null;
+      this.passwordGenerateLength = this.strengthParams.passwordGenerateLength ?? this.getConfig().get('passwordGenerateLength') ?? null;
+      this.passwordGenerateLetterCount = this.strengthParams.passwordGenerateLetterCount ?? this.getConfig().get('passwordGenerateLetterCount') ?? null;
+      this.passwordGenerateNumberCount = this.strengthParams.passwordGenerateNumberCount ?? this.getConfig().get('passwordGenerateNumberCount') ?? null;
     }
     fetch() {
       return {};
@@ -77063,7 +77122,7 @@ define("views/stream/notes/update", ["exports", "views/stream/note"], function (
         this.statusText = this.getLanguage().translateOption(statusValue, statusField, this.model.attributes.parentType);
       }
       this.wait(true);
-      this.getModelFactory().create(parentType, model => {
+      this.getModelFactory().create(parentType).then(model => {
         const modelWas = model;
         const modelBecame = model.clone();
         data.attributes = data.attributes || {};
@@ -77073,7 +77132,7 @@ define("views/stream/notes/update", ["exports", "views/stream/note"], function (
         const fields = this.fieldList = data.fields ?? [];
         fields.forEach(field => {
           const type = model.getFieldType(field) || 'base';
-          const viewName = this.getMetadata().get(['entityDefs', model.entityType, 'fields', field, 'view']) || this.getFieldManager().getViewName(type);
+          const viewName = model.getFieldParam(field, 'auditView') ?? model.getFieldParam(field, 'view') ?? this.getFieldManager().getViewName(type);
           const attributeList = this.getFieldManager().getEntityTypeFieldAttributeList(model.entityType, field);
           let hasValue = false;
           for (const attribute of attributeList) {
@@ -77092,23 +77151,25 @@ define("views/stream/notes/update", ["exports", "views/stream/note"], function (
           }
           this.createView(field + 'Was', viewName, {
             model: modelWas,
+            name: field,
             readOnly: true,
-            defs: {
-              name: field
-            },
             mode: 'detail',
             inlineEditDisabled: true,
-            selector: `.row[data-name="${field}"] .cell-was`
+            selector: `.row[data-name="${field}"] .cell-was`,
+            auditData: {
+              type: 'was'
+            }
           });
           this.createView(field + 'Became', viewName, {
             model: modelBecame,
+            name: field,
             readOnly: true,
-            defs: {
-              name: field
-            },
             mode: 'detail',
             inlineEditDisabled: true,
-            selector: `.row[data-name="${field}"] .cell-became`
+            selector: `.row[data-name="${field}"] .cell-became`,
+            auditData: {
+              type: 'became'
+            }
           });
           this.fieldDataList.push({
             field: field,
@@ -77122,11 +77183,12 @@ define("views/stream/notes/update", ["exports", "views/stream/note"], function (
     }
     toggleDetails() {
       const target = this.element.querySelector('[data-action="expandDetails"]');
-      const $details = this.$el.find('> .details');
-      const $fields = this.$el.find('> .stream-details-container > .fields');
+      const detailsElement = this.element.querySelector(':scope > .details');
+      const fieldElement = this.element.querySelector(':scope > .stream-details-container > .fields');
+      const iconElement = target.querySelector('[data-role="icon"]');
       if (!this.isExpanded) {
-        $details.removeClass('hidden');
-        $fields.addClass('hidden');
+        detailsElement.classList.remove('hidden');
+        fieldElement === null || fieldElement === void 0 || fieldElement.classList.add('hidden');
         this.fieldList.forEach(field => {
           const wasField = this.getView(field + 'Was');
           const becomeField = this.getView(field + 'Became');
@@ -77135,13 +77197,15 @@ define("views/stream/notes/update", ["exports", "views/stream/note"], function (
             becomeField.trigger('panel-show-propagated');
           }
         });
-        $(target).find('span').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        iconElement.classList.remove('fa-chevron-down');
+        iconElement.classList.add('fa-chevron-up');
         this.isExpanded = true;
         return;
       }
-      $details.addClass('hidden');
-      $fields.removeClass('hidden');
-      $(target).find('span').addClass('fa-chevron-down').removeClass('fa-chevron-up');
+      detailsElement.classList.add('hidden');
+      fieldElement === null || fieldElement === void 0 || fieldElement.classList.remove('hidden');
+      iconElement.classList.remove('fa-chevron-up');
+      iconElement.classList.add('fa-chevron-down');
       this.isExpanded = false;
     }
   }
@@ -90002,7 +90066,7 @@ define("views/lead-capture/fields/field-list", ["exports", "views/fields/array"]
       /** @type {HTMLElement} */
       const item = div.querySelector('.list-group-item');
       const group = document.createElement('div');
-      group.classList.add('btn-group', 'pull-right');
+      group.classList.add('btn-group', 'pull-right', 'item-button');
       const button = document.createElement('button');
       button.classList.add('btn', 'btn-link', 'btn-sm', 'dropdown-toggle');
       button.innerHTML = `<span class="caret"></span>`;
@@ -91849,6 +91913,10 @@ define("views/fields/link-category-tree", ["exports", "views/fields/link"], func
     selectRecordsView = 'views/modals/select-category-tree-records';
     autocompleteDisabled = false;
     getUrl() {
+      if (this.getMetadata().get(`scopes.${this.entityType}.type`) === 'CategoryTree') {
+        // Can be used for the 'parent' field of the category entity type.
+        return super.getUrl();
+      }
       const id = this.model.get(this.idName);
       if (!id) {
         return null;
@@ -92621,7 +92689,7 @@ define("views/fields/foreign-phone", ["exports", "views/fields/phone"], function
   var _default = _exports.default = ForeignPhoneFieldView;
 });
 
-define("views/fields/foreign-multi-enum", ["exports", "views/fields/multi-enum", "views/fields/foreign-array"], function (_exports, _multiEnum, _foreignArray) {
+define("views/fields/foreign-multi-enum", ["exports", "views/fields/multi-enum", "views/fields/foreign-array", "helpers/misc/foreign-field"], function (_exports, _multiEnum, _foreignArray, _foreignField) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
@@ -92630,6 +92698,7 @@ define("views/fields/foreign-multi-enum", ["exports", "views/fields/multi-enum",
   _exports.default = void 0;
   _multiEnum = _interopRequireDefault(_multiEnum);
   _foreignArray = _interopRequireDefault(_foreignArray);
+  _foreignField = _interopRequireDefault(_foreignField);
   function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
   /************************************************************************
    * This file is part of EspoCRM.
@@ -92661,6 +92730,21 @@ define("views/fields/foreign-multi-enum", ["exports", "views/fields/multi-enum",
 
   class ForeignMultiEnumFieldView extends _multiEnum.default {
     type = 'foreign';
+
+    /**
+     * @private
+     * @type {string}
+     */
+    foreignEntityType;
+    setup() {
+      const helper = new _foreignField.default(this);
+      const foreignParams = helper.getForeignParams();
+      for (const param in foreignParams) {
+        this.params[param] = foreignParams[param];
+      }
+      this.foreignEntityType = helper.getEntityType();
+      super.setup();
+    }
     setupOptions() {
       _foreignArray.default.prototype.setupOptions.call(this);
     }
@@ -92964,7 +93048,7 @@ define("views/fields/foreign-currency-converted", ["exports", "views/fields/curr
   var _default = _exports.default = ForeignCurrencyConvertedFieldView;
 });
 
-define("views/fields/foreign-checklist", ["exports", "views/fields/checklist"], function (_exports, _checklist) {
+define("views/fields/foreign-checklist", ["exports", "views/fields/checklist", "helpers/misc/foreign-field", "views/fields/foreign-array"], function (_exports, _checklist, _foreignField, _foreignArray) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
@@ -92972,6 +93056,8 @@ define("views/fields/foreign-checklist", ["exports", "views/fields/checklist"], 
   });
   _exports.default = void 0;
   _checklist = _interopRequireDefault(_checklist);
+  _foreignField = _interopRequireDefault(_foreignField);
+  _foreignArray = _interopRequireDefault(_foreignArray);
   function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
   /************************************************************************
    * This file is part of EspoCRM.
@@ -93003,21 +93089,23 @@ define("views/fields/foreign-checklist", ["exports", "views/fields/checklist"], 
 
   class ForeignChecklistFieldView extends _checklist.default {
     type = 'foreign';
+
+    /**
+     * @private
+     * @type {string}
+     */
+    foreignEntityType;
+    setup() {
+      const helper = new _foreignField.default(this);
+      const foreignParams = helper.getForeignParams();
+      for (const param in foreignParams) {
+        this.params[param] = foreignParams[param];
+      }
+      this.foreignEntityType = helper.getEntityType();
+      super.setup();
+    }
     setupOptions() {
-      this.params.options = [];
-      if (!this.params.field || !this.params.link) {
-        return;
-      }
-      const scope = this.getMetadata().get(['entityDefs', this.model.entityType, 'links', this.params.link, 'entity']);
-      if (!scope) {
-        return;
-      }
-      this.params.isSorted = this.getMetadata().get(['entityDefs', scope, 'fields', this.params.field, 'isSorted']) || false;
-      this.params.options = this.getMetadata().get(['entityDefs', scope, 'fields', this.params.field, 'options']) || [];
-      this.translatedOptions = {};
-      this.params.options.forEach(item => {
-        this.translatedOptions[item] = this.getLanguage().translateOption(item, this.params.field, scope);
-      });
+      _foreignArray.default.prototype.setupOptions.call(this);
     }
   }
   var _default = _exports.default = ForeignChecklistFieldView;
@@ -96550,8 +96638,6 @@ define("views/email-template/record/edit-quick", ["exports", "views/record/edit"
    ************************************************************************/
 
   class _default extends _edit.default {
-    isWide = true;
-    sideView = false;
     setup() {
       super.setup();
       _detail.default.prototype.listenToInsertField.call(this);
@@ -100614,7 +100700,33 @@ define("views/email/fields/email-address-varchar", ["exports", "views/fields/bas
       }
       return true;
     }
+
+    /**
+     *
+     * @param {string} address
+     * @param {string} name
+     * @param {string} [type]
+     * @param {string} [id]
+     */
     addAddress(address, name, type, id) {
+      if (name === '') {
+        const nameHash = this.model.attributes.nameHash ?? {};
+        if (address in nameHash) {
+          name = nameHash[address];
+        }
+      }
+      if (type === undefined) {
+        const typeHash = this.model.attributes.typeHash ?? {};
+        if (address in typeHash) {
+          type = typeHash[address];
+        }
+      }
+      if (id === undefined) {
+        const idHash = this.model.attributes.idHash ?? {};
+        if (address in idHash) {
+          id = idHash[address];
+        }
+      }
       if (this.justAddedAddress) {
         this.deleteAddress(this.justAddedAddress);
       }
@@ -100659,7 +100771,7 @@ define("views/email/fields/email-address-varchar", ["exports", "views/fields/bas
         if (type === 'User' && id) {
           avatarHtml = this.getHelper().getAvatarHtml(id, 'small', 18, 'avatar-link');
         }
-        $text.append($('<span>').text(name), ' ', $('<span>').addClass('text-muted middle-dot'), ' ');
+        $text.append($('<span>').text(name), '<span class="no-select"> </span>', $('<span>').addClass('text-muted middle-dot'), '<span class="no-select"> </span>');
       }
       $text.append($('<span>').text(address));
       const $div = $('<div>').attr('data-address', address).addClass('list-group-item').append(avatarHtml, $('<a>').attr('data-address', address).attr('role', 'button').attr('tabindex', '0').attr('data-action', 'clearAddress').addClass('pull-right').append($('<span>').addClass('fas fa-times')), $text);

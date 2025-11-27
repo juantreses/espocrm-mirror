@@ -12,7 +12,8 @@
         "cDateOfBirth": "Verjaardag",
         "cCampagneRoundRobin": "Campagne Round Robin",
         "cExternalCreatedAt": "Vanko Aanmaakdatum",
-        "cFollowUpAction": "Opvolgactie"
+        "cFollowUpAction": "Opvolgactie",
+        "cSurveyData": "Enquête"
     },
     "links": {
         "cSlimFitCenter": "SlimFit-Center",

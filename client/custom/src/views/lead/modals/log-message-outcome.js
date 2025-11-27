@@ -1,4 +1,4 @@
-define('custom:views/lead/modals/log-message-outcome', ['views/modal'], function (Dep) {
+define('custom:views/lead/modals/log-message-outcome', ['views/modal', 'custom:utils/date-utils'], function (Dep, DateUtils) {
 
 	return Dep.extend({
 		template: 'custom:lead/modals/log-message-outcome',
@@ -41,20 +41,26 @@ define('custom:views/lead/modals/log-message-outcome', ['views/modal'], function
 			const callAgainDateTime = this.$el.find('[name="callAgainDateTime"]').val();
 			const coachNote = this.$el.find('[name="coachNote"]').val();
 
+			const saveButton = this.$el.find('button[data-name="save"]');
+            saveButton.prop('disabled', true);
+
 			if (!outcome) {
                 Espo.Ui.error('Selecteer een uitkomst.');
+				saveButton.prop('disabled', false);
                 return;
             }
 
             if (outcome === 'call_again' && !callAgainDateTime) {
 				if (!callAgainDateTime) {
                     Espo.Ui.error('Datum/tijd opnieuw bellen is verplicht.');
+					saveButton.prop('disabled', false);
                     return;
                 }
                 const now = new Date();
                 const callAgainDate = new Date(callAgainDateTime);
                 if (callAgainDate <= now) {
                     Espo.Ui.error('Datum/tijd opnieuw bellen moet in de toekomst zijn.');
+					saveButton.prop('disabled', false);
                     return;
                 }
 			}
@@ -62,13 +68,14 @@ define('custom:views/lead/modals/log-message-outcome', ['views/modal'], function
 			Espo.Ajax.postRequest('lead/action/logMessageOutcome', {
 				id: this.model.id,
 				outcome: outcome,
-				callAgainDateTime: callAgainDateTime || null,
+				callAgainDateTime: callAgainDateTime ? DateUtils.toOffsetISOString(new Date(callAgainDateTime)) : null,
 				coachNote: coachNote || null
 			}).then(() => {
 				this.trigger('success');
 				this.close();
 			}).catch(() => {
 				Espo.Ui.error('Bericht uitkomst opslaan mislukt.');
+				saveButton.prop('disabled', false);
 			});
 		}
 	});

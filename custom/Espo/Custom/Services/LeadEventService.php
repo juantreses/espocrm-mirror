@@ -77,15 +77,12 @@ class LeadEventService
         $eventRepository = $this->entityManager->getRepository('CLeadEvent');
         $event = $this->entityManager->getEntity('CLeadEvent');
 
-        $localTimezone = new \DateTimeZone('Europe/Brussels');
-        $utcTimezone = new \DateTimeZone('UTC');
-
+        $timezone = new \DateTimeZone('UTC');
         if (!$eventDate) {
-            $dt = new \DateTime('now', $localTimezone);
-            $dt->setTimezone($utcTimezone);
+            $dt = new \DateTime('now', $timezone);
         } else {
-            $dt = new \DateTime($eventDate, $localTimezone);
-            $dt->setTimezone($utcTimezone);
+            $dt = new \DateTime($eventDate);
+            $dt->setTimeZone($timezone);
         }
         $event->set([
             'eventType' => $eventType->value,
@@ -261,22 +258,19 @@ class LeadEventService
             return;
         }
 
-        if (!$eventDate) {
-            $eventDate = date('Y-m-d H:i:s');
-        }
-
         $timezone = new \DateTimeZone('Europe/Brussels');
         if (!$eventDate) {
             $dt = new \DateTime('now', $timezone);
         } else {
-            $dt = new \DateTime($eventDate, $timezone);
+            $dt = new \DateTime($eventDate);
+            $dt->setTimezone($timezone);
         }
 
         $existingNotes = (string) ($lead->get('cNotes') ?? '');
 
         $formattedHeader = $dt->format('[d/m/Y H:i]');
         $newLine = "$formattedHeader ($source): $coachNote";
-        $updatedNotes = $existingNotes ? ($existingNotes . "\n\n" . $newLine) : $newLine;
+        $updatedNotes = $existingNotes ? ($newLine . "\n\n" . $existingNotes) : $newLine;
 
         $lead->set('cNotes', $updatedNotes);
         $this->entityManager->saveEntity($lead);

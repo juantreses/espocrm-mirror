@@ -167,6 +167,11 @@
             "max": 100,
             "tooltip": true,
             "isCustom": true
+        },
+        "linkReferral": {
+            "type": "url",
+            "audited": true,
+            "isCustom": true
         }
     },
     "links": {

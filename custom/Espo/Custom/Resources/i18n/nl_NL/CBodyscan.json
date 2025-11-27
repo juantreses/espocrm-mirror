@@ -4,7 +4,8 @@
     },
     "fields": {
         "type": "Type",
-        "datum": "Datum"
+        "datum": "Datum",
+        "lichaamstype": "Fysiek"
     },
     "options": {
         "type": {

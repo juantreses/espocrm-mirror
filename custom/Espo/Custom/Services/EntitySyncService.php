@@ -65,11 +65,11 @@ class EntitySyncService {
                 $destinationEntity->set($field, $sourceEntity->get($field));
             }
         }
+
+        $destinationEntity->set('suppressVankoSync', true);
+
         $this->entityManager->saveEntity(
-            $destinationEntity, 
-            [
-                SaveOption::SKIP_ALL => true,
-            ]
+            $destinationEntity
         );
     }
 
@@ -78,6 +78,9 @@ class EntitySyncService {
         $changed = false;
         foreach (self::BASE_FIELDS_TO_WATCH as $field) {
             $changed = $changed || $this->hasFieldChanged($entity, $field);
+            if($changed){
+                return $changed;
+            }
         }
         return $changed;
     }

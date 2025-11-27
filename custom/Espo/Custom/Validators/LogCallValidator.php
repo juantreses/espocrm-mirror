@@ -18,21 +18,25 @@ class LogCallValidator
             throw new BadRequest('Invalid call outcome.');
         }
 
-        $timezone = new \DateTimeZone('Europe/Brussels');
-
-        if (isset($data->callDateTime) && !empty($data->callDateTime)) {
-            if (new \DateTime($data->callDateTime, $timezone) > new \DateTime('now', $timezone)) {
-                throw new BadRequest('callDateTime must be in the present or past.');
+        if (!empty($data->callDateTime)) {
+            $callDate = new \DateTime($data->callDateTime);
+            $now = new \DateTime('now', new \DateTimeZone('UTC'));
+    
+            if ($calldate > $now) {
+                throw new BadRequest('Gesprek datum/tijd mag niet in de toekomst zijn.');
             }
         }
-
+    
         if ($outcome === CallOutcome::CALL_AGAIN->value) {
-            if (!isset($data->callAgainDateTime) || empty($data->callAgainDateTime)) {
-                throw new BadRequest('callAgainDateTime is required for "call again" outcome');
+            if (empty($data->callAgainDateTime)) {
+                throw new BadRequest('Datum/tijd opnieuw bellen is verplicht.');
             }
-
-            if (new \DateTime($data->callAgainDateTime, $timezone) <= new \DateTime('now', $timezone)) {
-                throw new BadRequest('callAgainDateTime must be in the future.');
+    
+            $callAgain = new \DateTime($data->callAgainDateTime);
+            $now = new \DateTime('now', new \DateTimeZone('UTC'));
+    
+            if ($callAgain <= $now) {
+                throw new BadRequest('Datum/tijd opnieuw bellen moet in de toekomst zijn.');
             }
         }
     }

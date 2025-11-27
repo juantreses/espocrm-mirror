@@ -31,7 +31,9 @@
             [
                 {
                     "name": "enquete"
-                },
+                }
+            ],
+            [
                 {
                     "name": "cadeaubon"
                 }
@@ -43,10 +45,7 @@
             ],
             [
                 {
-                    "name": "bissKaartSlimFitCenter"
-                },
-                {
-                    "name": "bissKaartCoachingCenter"
+                    "name": "linkReferral"
                 }
             ]
         ],
@@ -58,6 +57,25 @@
         "noteText": null,
         "noteStyle": "info",
         "customLabel": "Actie Links"
+    },
+    {
+        "rows": [
+            [
+                {
+                    "name": "bissKaartSlimFitCenter"
+                },
+                {
+                    "name": "bissKaartCoachingCenter"
+                }
+            ]
+        ],
+        "dynamicLogicVisible": null,
+        "style": "default",
+        "tabBreak": false,
+        "hidden": false,
+        "noteText": null,
+        "noteStyle": "info",
+        "customLabel": "BISS Card"
     },
     {
         "rows": [

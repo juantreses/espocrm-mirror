@@ -45,7 +45,7 @@ class TeamAssignmentService
         
         if ($lead->get('cTeamId') === $team->getId()) {
             $this->log->info("Lead {$lead->getId()} is already assigned to team {$teamName}.");
-            return true;
+            return false;
         }
 
         return $this->assignTeam($lead, $team);

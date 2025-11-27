@@ -101,6 +101,9 @@ define([
                         <div class="chart-container" style="position: relative; height: 300px; margin-bottom: 20px;">
                             <canvas id="{{panelId}}_metabool"></canvas>
                         </div>
+                        <div class="chart-container" style="position: relative; height: 300px; margin-bottom: 20px;">
+                            <canvas id="{{panelId}}_vocht_bmr"></canvas>
+                        </div>
                     {{else}}
                         <div class="alert alert-info">
                             <span class="fas fa-info-circle"></span>
@@ -277,13 +280,17 @@ define([
             if (this.metaboolChart) {
                 this.metaboolChart.destroy();
             }
+            if (this.vochtBmrChart) {
+                this.vochtBmrChart.destroy();
+            }
             
             const canvas = this.$el.find(`#${this.panelId}`)[0];
             const canvasPercentage = this.$el.find(`#${this.panelId}_percentage`)[0];
             const canvasKilogram = this.$el.find(`#${this.panelId}_kilogram`)[0];
             const canvasMetabool = this.$el.find(`#${this.panelId}_metabool`)[0];
+            const canvasVochtBmr = this.$el.find(`#${this.panelId}_vocht_bmr`)[0];
             
-            if (!canvas || !canvasPercentage || !canvasKilogram || !canvasMetabool) {
+            if (!canvas || !canvasPercentage || !canvasKilogram || !canvasMetabool || !canvasVochtBmr) {
                 console.error('Canvas elements not found');
                 return;
             }
@@ -298,6 +305,8 @@ define([
                 const spierMassa = this.weightData.map(item => parseFloat(item.spiermassa || 0));
                 const visceraalVet = this.weightData.map(item => parseFloat(item.visceraalvet || 0));
                 const metabolischeLeeftijd = this.weightData.map(item => parseFloat(item.metabolischeleeftijd || 0));
+                const vochtPercentage = this.weightData.map(item => parseFloat(item.vochtpercentage || 0));
+                const bmr = this.weightData.map(item => parseFloat(item.bmr || 0));
                 
                 this.gewichtChart = new Chart(canvas.getContext('2d'), {
                     type: 'line',
@@ -567,8 +576,8 @@ define([
                             {
                                 label: 'Visceraal vet',
                                 data: visceraalVet,
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 205, 86, 1)',
+                                backgroundColor: 'rgba(255, 205, 86, 0.2)',
                                 yAxisID: 'y2',
                                 tension: 0.1,
                                 pointRadius: 5,
@@ -626,6 +635,98 @@ define([
                                 grid: { drawOnChartArea: false },
                                 min: minVisceraalVetY,
                                 max: maxVisceraalVetY
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+
+                const minVochtPercentageY = Math.floor(Math.min(...vochtPercentage)) - 2;
+                const maxVochtPercentageY = Math.ceil(Math.max(...vochtPercentage)) + 2;
+                const minBmrY = Math.floor(Math.min(...bmr)) - 50;
+                const maxBmrY = Math.ceil(Math.max(...bmr)) + 50;
+                
+                this.vochtBmrChart = new Chart(canvasVochtBmr.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Vocht (%)',
+                                data: vochtPercentage,
+                                borderColor: 'rgb(75, 192, 192)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                yAxisID: 'y',
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointHoverRadius: 8
+                            },
+                            {
+                                label: 'BMR',
+                                data: bmr,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                yAxisID: 'y2',
+                                tension: 0.1,
+                                pointRadius: 5,
+                                pointHoverRadius: 8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 30,
+                                right: 30,
+                                top: 0,
+                                bottom: 0
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'month',
+                                    stepSize: 2,
+                                    displayFormats: {
+                                        month: 'MMM yyyy',
+                                        day: 'dd/MM/yyyy'
+                                    }
+                                },
+                                ticks: {
+                                    autoSkip: false
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                title: { display: true, text: 'Vocht (%)' },
+                                min: minVochtPercentageY,
+                                max: maxVochtPercentageY
+                            },
+                            y2: {
+                                type: 'linear',
+                                position: 'right',
+                                title: { display: true, text: 'BMR' },
+                                grid: { drawOnChartArea: false },
+                                min: minBmrY,
+                                max: maxBmrY
                             }
                         },
                         plugins: {
@@ -707,6 +808,9 @@ define([
             }
             if (this.metaboolChart) {
                 this.metaboolChart.destroy();
+            }
+            if (this.vochtBmrChart) {
+                this.vochtBmrChart.destroy();
             }
             super.remove();
         }

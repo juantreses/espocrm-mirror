@@ -43,6 +43,23 @@
         "rows": [
             [
                 {
+                    "name": "cSurveyData"
+                }
+            ]
+        ],
+        "dynamicLogicVisible": null,
+        "style": "default",
+        "tabBreak": true,
+        "tabLabel": "Vragen en Antwoorden",
+        "hidden": false,
+        "noteText": null,
+        "noteStyle": "info",
+        "customLabel": "Vragen en Antwoorden"
+    },
+    {
+        "rows": [
+            [
+                {
                     "name": "cExternalCreatedAt"
                 },
                 {
