@@ -41,6 +41,23 @@
         "rows": [
             [
                 {
+                    "name": "cNotes"
+                }
+            ]
+        ],
+        "dynamicLogicVisible": null,
+        "style": "default",
+        "tabBreak": true,
+        "tabLabel": "Notes",
+        "hidden": false,
+        "noteText": null,
+        "noteStyle": "info",
+        "customLabel": "Notes"
+    },
+    {
+        "rows": [
+            [
+                {
                     "name": "cMaximaleHartslag"
                 }
             ]

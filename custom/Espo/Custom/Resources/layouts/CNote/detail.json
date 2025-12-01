@@ -1,0 +1,18 @@
+[
+    {
+        "rows": [
+            [
+                {
+                    "name": "contact"
+                }
+            ],
+            [
+                {
+                    "name": "note"
+                }
+            ]
+        ],
+        "style": "default",
+        "label": "Overview"
+    }
+]
