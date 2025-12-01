@@ -1,0 +1,12 @@
+{
+    "labels": {
+        "Create CNote": "Creëer Note"
+    },
+    "fields": {
+        "note": "Note",
+        "contact": "Contact"
+    },
+    "links": {
+        "contact": "Contact"
+    }
+}

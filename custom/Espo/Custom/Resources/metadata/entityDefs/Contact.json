@@ -95,6 +95,9 @@
             "min": 130,
             "max": 230,
             "isCustom": true
+        },
+        "cNotes": {
+            "type": "linkMultiple"
         }
     },
     "links": {
@@ -137,6 +140,13 @@
             "type": "hasMany",
             "foreign": "contact",
             "entity": "CWorkoutSchema",
+            "audited": false,
+            "isCustom": true
+        },
+        "cNotes": {
+            "type": "hasMany",
+            "foreign": "contact",
+            "entity": "CNote",
             "audited": false,
             "isCustom": true
         }
