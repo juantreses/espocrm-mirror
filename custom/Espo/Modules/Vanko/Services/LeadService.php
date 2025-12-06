@@ -26,7 +26,6 @@ class LeadService
     private const COACH_FIELD = 'CC_SlimFitCenter_Coach';
     private const CENTER_FIELD = 'CC_SlimFitCenter';
     private const CAMPAIGN_FIELD = 'CC_SlimFitCenter_Campagne_Type';
-    private const DEFAULT_LEAD_STATUS = 'assigned';
 
     public function __construct(
         private readonly EntityManager $entityManager,
@@ -89,14 +88,9 @@ class LeadService
         $centerName = $this->getTrimmedValue($data, self::CENTER_FIELD);
         $campaignName = $this->getTrimmedValue($data, self::CAMPAIGN_FIELD);
 
-        $teamWasAssigned = $this->teamAssigner->assignTeamByName($lead, $coachName);
+        $this->teamAssigner->assignTeamByName($lead, $coachName);
         $this->centerAssigner->assignCenterByName($lead, $centerName);
         $this->campaignAssigner->assignCampaignByName($lead, $campaignName);
-
-        if ($teamWasAssigned) {
-            $lead->set('status', self::DEFAULT_LEAD_STATUS);
-            $this->log->info("Set lead status to: " . self::DEFAULT_LEAD_STATUS);
-        }
     }
 
     private function findLeadByVankoId(string $contactId): ?Lead
