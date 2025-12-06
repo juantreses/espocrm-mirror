@@ -1,0 +1,17 @@
+{
+    "services": {
+        "LeadSideEffectService": {
+            "className": "Espo\\Custom\\Services\\LeadLifecycle\\LeadSideEffectService",
+            "arguments": [
+                { "type": "entityManager" }
+            ]
+        },
+        "LeadStateFactory": {
+            "className": "Espo\\Custom\\Services\\LeadLifecycle\\LeadStateFactory",
+            "arguments": [
+                { "type": "container" },
+                { "type": "injectableFactory" }
+            ]
+        }
+    }
+}

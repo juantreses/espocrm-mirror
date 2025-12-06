@@ -32,23 +32,27 @@
             "Converted": "Geconverteerd",
             "Verkeerd Nummer": "Verkeerd Nummer",
             "Geen Interesse": "Geen Interesse",
-            "Dead": "Dead",
+            "Dead": "Dood",
             "Contacted": "Succesvol Gecontacteerd",
             "no_answer": "Geen antwoord",
             "wrong_number": "Verkeerd nummer",
             "not_interested": "Geen interesse (Telefoon)",
-            "invited": "Uitgenodigd KS",
+            "invited": "Uitgenodigd",
             "attended": "Aanwezig KS",
             "no_show": "Niet opgedaagd KS",
-            "appointment_cancelled": "Geannuleerd KS",
+            "appointment_cancelled": "Geannuleerd",
             "became_client": "Klant geworden",
             "not_converted": "Geen klant geworden",
             "became_coach": "Coach geworden",
             "new": "Nieuw",
             "assigned": "Toegewezen",
             "contacted": "Succesvol gecontacteerd",
-            "appointment_booked": "Ingepland KS",
-            "call_again": "Opnieuw bellen"
+            "appointment_booked": "Ingepland",
+            "call_again": "Opnieuw bellen",
+            "message_to_be_sent": "Bericht sturen",
+            "message_sent": "Bericht gestuurd",
+            "still_thinking": "Twijfel",
+            "Disqualified": "Vervallen"
         }
     }
 }

@@ -15,6 +15,7 @@ use Espo\Modules\Vanko\Services\SlimFitCenterAssignmentService;
 use Espo\Modules\Vanko\Services\CampaignAssignmentService;
 use Espo\ORM\EntityManager;
 use Espo\ORM\Repository\Option\SaveOption;
+use Espo\Custom\Services\LeadLifecycle\LeadStateFactory;
 
 /**
  * Orchestrates the processing of incoming leads from the Vanko API.
@@ -26,7 +27,6 @@ class LeadService
     private const COACH_FIELD = 'CC_SlimFitCenter_Coach';
     private const CENTER_FIELD = 'CC_SlimFitCenter';
     private const CAMPAIGN_FIELD = 'CC_SlimFitCenter_Campagne_Type';
-    private const DEFAULT_LEAD_STATUS = 'assigned';
 
     public function __construct(
         private readonly EntityManager $entityManager,
@@ -35,7 +35,8 @@ class LeadService
         private readonly LeadFactory $leadFactory,
         private readonly TeamAssignmentService $teamAssigner,
         private readonly SlimFitCenterAssignmentService $centerAssigner,
-        private readonly CampaignAssignmentService $campaignAssigner
+        private readonly CampaignAssignmentService $campaignAssigner,
+        private readonly LeadStateFactory $stateFactory,
     ) {}
 
     /**
@@ -93,9 +94,18 @@ class LeadService
         $this->centerAssigner->assignCenterByName($lead, $centerName);
         $this->campaignAssigner->assignCampaignByName($lead, $campaignName);
 
-        if ($teamWasAssigned) {
-            $lead->set('status', self::DEFAULT_LEAD_STATUS);
-            $this->log->info("Set lead status to: " . self::DEFAULT_LEAD_STATUS);
+        $currentStatus = $lead->get('status');
+        
+        if ($teamWasAssigned && $currentStatus === 'new') {
+            try {
+                $currentState = $this->stateFactory->create($currentStatus);
+                $currentState->assign($lead); 
+                
+                $this->log->info("State machine executed New -> Assigned transition.");
+
+            } catch (\Exception $e) {
+                $this->log->error("State transition failed during assignment for lead {$lead->getId()}: " . $e->getMessage());
+            }
         }
     }
 

@@ -75,7 +75,8 @@
                 "still_thinking",
                 "became_client",
                 "Converted",
-                "Disqualified"
+                "Disqualified",
+                "Dead"
             ],
             "default": "new",
             "style": {
@@ -90,7 +91,8 @@
                 "still_thinking": null,
                 "became_client": "info",
                 "Converted": "success",
-                "Disqualified": "danger"
+                "Disqualified": "info",
+                "Dead": "danger"
             },
             "labelType": null,
             "notActualOptions": [

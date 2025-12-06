@@ -1,0 +1,5 @@
+{
+    "autowire": [
+        "Espo\\Custom\\Services\\LeadLifecycle\\State"
+    ]
+}
