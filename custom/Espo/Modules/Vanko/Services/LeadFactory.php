@@ -27,6 +27,8 @@ class LeadFactory
     private const Q_DO_SPORT = 'Doe je aan sport?';
     private const Q_SPORT_HOURS = 'Hoeveel uur in de week sport je?';
     private const Q_REMARK = 'Opmerking';
+    private const Q_WhatForSkin = 'Waar wil jij je huid het liefst in verbeteren?';
+    private const Q_WorkshopAvailability = 'Kun je de komende weken op zondagochtend tussen 10.00 en 12.00 meedoen aan de gratis workshop?';
 
     /**
      * Unified field mapping structure that supports both simple and fallback mappings.
@@ -75,6 +77,8 @@ class LeadFactory
             self::Q_SPORT_TYPE,
             self::Q_FREE_EXPERIENCE,
             self::Q_REMARK,
+            self::Q_WhatForSkin,
+            self::Q_WorkshopAvailability,
         ],
     ];
 
@@ -96,14 +100,12 @@ class LeadFactory
 
             // Apply survey data as a JSON string
             $this->applySurveyData($lead, $data);
+
+            // Set a runtime flag to stop the AfterSaveHook from syncing to Vanko just yet
+            $lead->set('suppressVankoSync', true);
             
             $this->entityManager->saveEntity(
-                $lead, 
-                [
-                    'skipAfterSave' => true,
-                    SaveOption::KEEP_NEW => true,
-                    SaveOption::KEEP_DIRTY => true,
-                ]
+                $lead
             );
 
             $this->log->info("Successfully instantiated lead {$lead->getId()} for Vanko ID {$data->contact_id}");
@@ -162,7 +164,20 @@ class LeadFactory
         foreach (self::FIELD_MAPPING as $espoField => $sourceFields) {
             foreach ($sourceFields as $vankoField) {
                 if (isset($data->$vankoField) && trim((string) $data->$vankoField) !== '') {
-                    $lead->set($espoField, trim((string) $data->$vankoField));
+
+                    $value = trim((string) $data->$vankoField);
+
+                    if ($espoField === 'cExternalCreatedAt') {
+                        try {
+                            $dt = new \DateTime($value);
+                            $dt->setTimezone(new \DateTimeZone('UTC')); 
+                            $value = $dt->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $this->log->warning("Failed to parse date for field $espoField: $value");
+                        }
+                    }
+
+                    $lead->set($espoField, $value);
                     break;
                 }
             }
@@ -172,13 +187,29 @@ class LeadFactory
     private function extractSurveyData(object $data): object
     {
         $surveyData = [];
-        $center = $data->CC_SlimFitCenter ?? 'default';
-        $questionsToExtract = self::SURVEY_MAPPING[$center] ?? self::SURVEY_MAPPING['default'];
+        
+        $center = isset($data->CC_SlimFitCenter) ? trim((string)$data->CC_SlimFitCenter) : '';
+
+        if ($center !== '' && array_key_exists($center, self::SURVEY_MAPPING)) {
+            $questionsToExtract = self::SURVEY_MAPPING[$center];
+        } else {
+            // Scenario B: Center is missing/unknown -> Look for ALL known questions
+            // We merge all arrays in SURVEY_MAPPING and remove duplicates
+            $allQuestions = [];
+            foreach (self::SURVEY_MAPPING as $centerQuestions) {
+                $allQuestions = array_merge($allQuestions, $centerQuestions);
+            }
+            $questionsToExtract = array_unique($allQuestions);
+        }
 
         foreach ($questionsToExtract as $questionKey) {
             if (property_exists($data, $questionKey)) {
-                 // Use the exact question key from mapping so we don't rely on varying input keys
                 $answer = $data->$questionKey;
+                
+                if ($answer === '' || $answer === null) {
+                    continue;
+                }
+
                 if (is_array($answer)) {
                     $surveyData[$questionKey] = implode(', ', $answer);
                 } else {

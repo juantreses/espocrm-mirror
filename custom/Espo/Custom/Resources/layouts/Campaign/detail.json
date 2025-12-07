@@ -3,20 +3,28 @@
         "rows": [
             [
                 {
-                    "name": "name"
+                    "name": "status"
                 },
                 {
-                    "name": "status"
+                    "name": "name"
                 }
             ],
             [
                 {
-                    "name": "description"
+                    "name": "cCampaignType"
+                },
+                {
+                    "name": "cCampaignSubType"
                 }
             ],
             [
                 {
                     "name": "cCampagneRoundRobins"
+                }
+            ],
+            [
+                {
+                    "name": "description"
                 }
             ]
         ],

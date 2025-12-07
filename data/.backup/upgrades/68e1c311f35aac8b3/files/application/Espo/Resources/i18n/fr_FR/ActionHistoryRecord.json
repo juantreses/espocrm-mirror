@@ -1,9 +1,0 @@
-{
-  "fields": {
-    "authLogRecord": "Enregistrement du journal d'authentification",
-    "userType": "Type d'utilisateur"
-  },
-  "links": {
-    "authLogRecord": "Enregistrement du journal d'authentification"
-  }
-}

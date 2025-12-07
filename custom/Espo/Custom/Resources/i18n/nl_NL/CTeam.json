@@ -21,7 +21,8 @@
         "betaalLinkSportweek": "Betaal Link Sportweek",
         "activeCampaigns": "Active Campaigns",
         "actief": "Actief",
-        "maxCallAttempts": "Aantal keer bellen vóór bericht"
+        "maxCallAttempts": "Aantal keer bellen vóór bericht",
+        "linkReferral": "Link Referral"
     },
     "links": {
         "user": "User",

@@ -65,11 +65,11 @@ class EntitySyncService {
                 $destinationEntity->set($field, $sourceEntity->get($field));
             }
         }
+
+        $destinationEntity->set('suppressVankoSync', true);
+
         $this->entityManager->saveEntity(
-            $destinationEntity, 
-            [
-                SaveOption::SKIP_ALL => true,
-            ]
+            $destinationEntity
         );
     }
 

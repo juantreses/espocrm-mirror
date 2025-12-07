@@ -10,6 +10,14 @@
         "align": "left"
     },
     {
+        "name": "cCampaignType",
+        "width": 16
+    },
+    {
+        "name": "cCampaignSubType",
+        "width": 16
+    },
+    {
         "name": "cCampagneRoundRobins",
         "notSortable": true,
         "align": "left"

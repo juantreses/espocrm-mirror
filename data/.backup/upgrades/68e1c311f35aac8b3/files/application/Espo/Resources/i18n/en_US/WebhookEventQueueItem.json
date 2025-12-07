@@ -1,8 +1,0 @@
-{
-    "fields": {
-        "event": "Event",
-        "target": "Target",
-        "data": "Data",
-        "isProcessed": "Is Processed"
-    }
-}
