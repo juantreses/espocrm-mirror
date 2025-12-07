@@ -7,7 +7,8 @@
         "CWorkoutSchema": "Workout Schema",
         "CWorkoutOefening": "Workout Oefening",
         "CCampagneRoundRobin": "Round Robin",
-        "CWorkoutSessie": "Workout Sessie"
+        "CWorkoutSessie": "Workout Sessie",
+        "CNote": "Note"
     },
     "scopeNamesPlural": {
         "CTeam": "HB Teams",
@@ -17,6 +18,7 @@
         "CWorkoutSchema": "Workout Schemas",
         "CWorkoutOefening": "Workout Oefeningen",
         "CCampagneRoundRobin": "Round Robins",
-        "CWorkoutSessie": "Workout Sessies"
+        "CWorkoutSessie": "Workout Sessies",
+        "CNote": "Notes"
     }
 }

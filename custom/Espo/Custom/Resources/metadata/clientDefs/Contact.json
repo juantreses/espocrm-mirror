@@ -38,6 +38,10 @@
         "workoutSchemas": {
             "layout": null,
             "selectPrimaryFilterName": null
+        },
+        "notes": {
+            "layout": null,
+            "selectPrimaryFilterName": null
         }
     },
     "views": {

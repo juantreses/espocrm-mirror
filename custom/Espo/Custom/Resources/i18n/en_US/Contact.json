@@ -9,14 +9,16 @@
         "cDateOfBirth": "Verjaardag",
         "cVankoCRM": "VankoCRM",
         "cWorkoutSchemas": "Workout Schemas",
-        "cHeight": "Lengte"
+        "cHeight": "Lengte",
+        "cNotes": "Notes"
     },
     "links": {
         "cSlimFitCenter": "SlimFit-Center",
         "cTeam": "Team",
         "cBodyscans": "Bodyscans",
         "cUser": "Account",
-        "cWorkoutSchemas": "Workout Schemas"
+        "cWorkoutSchemas": "Workout Schemas",
+        "cNotes": "Notes"
     },
     "options": {
         "cTypeKlant": {

@@ -1,0 +1,14 @@
+[
+    {
+        "name": "createdBy",
+        "width": 20
+    },
+    {
+        "name": "modifiedAt",
+        "width": 20
+    },
+    {
+        "name": "note",
+        "width": 20
+    }
+]

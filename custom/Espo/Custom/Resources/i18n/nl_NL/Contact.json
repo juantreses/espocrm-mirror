@@ -10,13 +10,15 @@
         "cTypeKlant": "Type Klant",
         "cDateOfBirth": "Verjaardag",
         "cVankoCRM": "VankoCRM",
-        "cWorkoutSchemas": "Workout Schemas"
+        "cWorkoutSchemas": "Workout Schemas",
+        "cNotes": "Notes"
     },
     "links": {
         "cSlimFitCenter": "SlimFit-Center",
         "cTeam": "Team",
         "cUser": "Account",
-        "cWorkoutSchemas": "Workout Schemas"
+        "cWorkoutSchemas": "Workout Schemas",
+        "cNotes": "Notes"
     },
     "options": {
         "cTypeKlant": {

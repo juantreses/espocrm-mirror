@@ -1,4 +1,7 @@
 {
+    "_delimiter_": {
+        "disabled": true
+    },
     "activities": {
         "disabled": true
     },
@@ -6,9 +9,6 @@
         "disabled": true
     },
     "stream": {
-        "disabled": true
-    },
-    "_delimiter_": {
         "disabled": true
     },
     "_tabBreak_0": {
@@ -30,9 +30,9 @@
     "_tabBreak_2": {
         "index": 4,
         "tabBreak": true,
-        "tabLabel": "Trainingsschema"
+        "tabLabel": "Notes"
     },
-    "cWorkoutSchemas": {
+    "cNotes": {
         "index": 5
     }
 }
