@@ -9,15 +9,15 @@ class LeadStateMachine
     public const STATE_ASSIGNED = 'assigned';
     public const STATE_CALL_AGAIN = 'call_again';
     public const STATE_INVITED = 'invited';
-    public const STATE_DISQUALIFIED = 'disqualified';
-    public const STATE_DEAD = 'dead';
+    public const STATE_DISQUALIFIED = 'Disqualified';
+    public const STATE_DEAD = 'Dead';
     public const STATE_MESSAGE_TO_BE_SENT = 'message_to_be_sent';
     public const STATE_MESSAGE_SENT = 'message_sent';
     public const STATE_APPOINTMENT_BOOKED = 'appointment_booked';
     public const STATE_APPOINTMENT_CANCELLED = 'appointment_cancelled';
     public const STATE_BECAME_CLIENT = 'became_client';
     public const STATE_STILL_THINKING = 'still_thinking';
-    public const STATE_CONVERTED = 'converted';
+    public const STATE_CONVERTED = 'Converted';
 
     /**
      * Map of Allowed Transitions: Current State => [Allowed Next States]

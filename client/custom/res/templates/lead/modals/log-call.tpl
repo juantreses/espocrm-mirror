@@ -23,9 +23,10 @@
             </div>
             <div class="col-md-6" data-field="call-again-date" style="display: none;">
                 <div class="form-group">
-                    <label>Datum/tijd opnieuw bellen *</label>
+                    <label>Datum/tijd opnieuw bellen</label>
                     <input type="datetime-local" name="callAgainDateTime" class="form-control" />
                     <small class="form-text text-muted">Vul in wanneer opnieuw te bellen</small>
+                    <small class="form-text text-muted">Laat leeg om automatisch op morgen te plaatsen</small>
                 </div>
             </div>
             <div class="col-md-12">

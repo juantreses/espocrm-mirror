@@ -52,12 +52,7 @@ define('custom:views/lead/modals/log-call', ['views/modal', 'custom:utils/date-u
                 return;
             }
 
-            if (outcome === 'call_again' && !callAgainDateTime) {
-				if (!callAgainDateTime) {
-                    Espo.Ui.error('Datum/tijd opnieuw bellen is verplicht.');
-                    saveButton.prop('disabled', false);
-                    return;
-                }
+            if (outcome === 'call_again' && callAgainDateTime) {
                 const now = new Date();
                 const callAgainDate = new Date(callAgainDateTime);
                 if (callAgainDate <= now) {

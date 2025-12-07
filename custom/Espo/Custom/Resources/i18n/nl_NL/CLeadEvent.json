@@ -11,15 +11,15 @@
             "not_interested": "Niet geïnteresseerd (telefoon)",
             "message_to_be_sent": "Bericht Sturen",
             "message_sent": "Bericht Verstuurd",
-            "invited": "Uitgenodigd KS",
-            "appointment_booked": "Ingepland KS",
-            "appointment_cancelled": "Afgezegd KS",
-            "attended": "Aanwezig KS",
-            "no_show": "Niet gekomen KS",
+            "invited": "Uitgenodigd",
+            "appointment_booked": "Ingepland",
+            "appointment_cancelled": "Afgezegd",
+            "attended": "Aanwezig",
+            "no_show": "Niet gekomen",
             "became_client": "Opgestart",
             "not_converted": "Niet opgestart",
             "became_coach": "Coach geworden",
-            "still_thinking": "Twijfel KS"
+            "still_thinking": "Twijfel"
         }
     }
 }
