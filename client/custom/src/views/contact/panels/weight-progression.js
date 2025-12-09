@@ -86,6 +86,40 @@ define([
                                         <td>Evolutie:</td>
                                         <td style="color: {{visceralFatEvolutionColor}};">{{visceralFatEvolution}}</td>
                                     </tr>
+                                    <tr>
+                                        <td colspan="6" style="text-align: right;">
+                                            <a href="#" data-action="toggleAllResults">
+                                                <span class="fas fa-list"></span> {{#if showAllResults}}Toon minder resultaten{{else}}Toon alle resultaten{{/if}}
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    {{#if showAllResults}}
+                                    <tr>
+                                        <td>Vocht (%):</td>
+                                        <td>{{firstVochtPercentage}}%</td>
+                                        <td>Vocht (%):</td>
+                                        <td>{{lastVochtPercentage}}%</td>
+                                        <td>Evolutie:</td>
+                                        <td style="color: {{vochtEvolutionColor}};">{{vochtEvolution}}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>BMR:</td>
+                                        <td>{{firstBmr}}</td>
+                                        <td>BMR:</td>
+                                        <td>{{lastBmr}}</td>
+                                        <td>Evolutie:</td>
+                                        <td style="color: {{bmrEvolutionColor}};">{{bmrEvolution}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Metabolische Lft.:</td>
+                                        <td>{{firstMetabolicAge}}</td>
+                                        <td>Metabolische Lft.:</td>
+                                        <td>{{lastMetabolicAge}}</td>
+                                        <td>Evolutie:</td>
+                                        <td style="color: {{metabolicAgeEvolutionColor}};">{{metabolicAgeEvolution}}</td>
+                                    </tr>
+                                    {{/if}}
                                 </tbody>
                             </table>
                         </div>
@@ -127,7 +161,7 @@ define([
             this.hasData = false;
             this.loading = false;
             this.weightData = [];
-            this.chartInstance = null;
+            this.showAllResults = false;
             
             // Initialize filter values
             this.limit = 60;
@@ -208,7 +242,7 @@ define([
             this.lastDate = this.formatDate(last.datum);
             this.firstWeight = parseFloat(first.gewicht).toFixed(1);
             this.lastWeight = parseFloat(last.gewicht).toFixed(1);
-            
+
             const weightChange = parseFloat(first.gewicht) - parseFloat(last.gewicht);
             this.weightEvolution = (weightChange >= 0 ? '-' : '+') + ' ' + Math.abs(weightChange).toFixed(1);
             this.evolutionColor = weightChange >= 0 ? 'green' : 'red';
@@ -233,6 +267,27 @@ define([
             const visceralFatChange = parseFloat(first.visceraalvet || 0) - parseFloat(last.visceraalvet || 0);
             this.visceralFatEvolution = (visceralFatChange >= 0 ? '-' : '+') + ' ' + Math.abs(visceralFatChange).toFixed(1);
             this.visceralFatEvolutionColor = visceralFatChange >= 0 ? 'green' : 'red';
+
+            // BMR evolution
+            this.firstBmr = parseFloat(first.bmr || 0).toFixed(0);
+            this.lastBmr = parseFloat(last.bmr || 0).toFixed(0);
+            const bmrChange = parseFloat(last.bmr || 0) - parseFloat(first.bmr || 0);
+            this.bmrEvolution = (bmrChange >= 0 ? '+' : '-') + ' ' + Math.abs(bmrChange).toFixed(0);
+            this.bmrEvolutionColor = bmrChange >= 0 ? 'green' : 'red';
+
+            // Water/Vocht Percentage evolution
+            this.firstVochtPercentage = parseFloat(first.vochtpercentage || 0).toFixed(1);
+            this.lastVochtPercentage = parseFloat(last.vochtpercentage || 0).toFixed(1);
+            const vochtChange = parseFloat(last.vochtpercentage || 0) - parseFloat(first.vochtpercentage || 0);
+            this.vochtEvolution = (vochtChange >= 0 ? '+' : '-') + ' ' + Math.abs(vochtChange).toFixed(1);
+            this.vochtEvolutionColor = vochtChange >= 0 ? 'green' : 'red';
+
+            // Metabolic Age (Metabolische Leeftijd) evolution
+            this.firstMetabolicAge = parseFloat(first.metabolischeleeftijd || 0).toFixed(0);
+            this.lastMetabolicAge = parseFloat(last.metabolischeleeftijd || 0).toFixed(0);
+            const metabolicAgeChange = parseFloat(first.metabolischeleeftijd || 0) - parseFloat(last.metabolischeleeftijd || 0); // Lower metabolic age is positive
+            this.metabolicAgeEvolution = (metabolicAgeChange >= 0 ? '-' : '+') + ' ' + Math.abs(metabolicAgeChange).toFixed(0);
+            this.metabolicAgeEvolutionColor = metabolicAgeChange >= 0 ? 'green' : 'red';
             
             // Calculate days difference
             const firstDate = new Date(first.datum);
@@ -249,11 +304,19 @@ define([
             
             // Bind filter events
             this.bindFilterEvents();
+            this.bindApplyShowAll();
         }
         
         bindFilterEvents() {
             this.$el.find('[data-action="applyFilters"]').on('click', () => {
                 this.applyFilters();
+            });
+        }
+
+        bindApplyShowAll() {
+            this.$el.find('[data-action="toggleAllResults"]').on('click', (e) => {
+                e.preventDefault(); // Stop the link from navigating/scrolling
+                this.actionToggleAllResults();
             });
         }
         
@@ -755,12 +818,7 @@ define([
             const date = new Date(dateString);
             return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
         }
-        
-        // Action handlers
-        actionRefreshWeightData() {
-            this.loadWeightData();
-        }
-        
+
         data() {
             return {
                 ...super.data(),
@@ -788,8 +846,26 @@ define([
                 firstVisceralFat: this.firstVisceralFat,
                 lastVisceralFat: this.lastVisceralFat,
                 visceralFatEvolution: this.visceralFatEvolution,
-                visceralFatEvolutionColor: this.visceralFatEvolutionColor
+                visceralFatEvolutionColor: this.visceralFatEvolutionColor,
+                showAllResults: this.showAllResults,
+                firstBmr: this.firstBmr,
+                lastBmr: this.lastBmr,
+                bmrEvolution: this.bmrEvolution,
+                bmrEvolutionColor: this.bmrEvolutionColor,
+                firstMetabolicAge: this.firstMetabolicAge,
+                lastMetabolicAge: this.lastMetabolicAge,
+                metabolicAgeEvolution: this.metabolicAgeEvolution,
+                metabolicAgeEvolutionColor: this.metabolicAgeEvolutionColor,
+                firstVochtPercentage: this.firstVochtPercentage,
+                lastVochtPercentage: this.lastVochtPercentage,
+                vochtEvolution: this.vochtEvolution,
+                vochtEvolutionColor: this.vochtEvolutionColor,
             };
+        }
+
+        actionToggleAllResults() {
+            this.showAllResults = !this.showAllResults;
+            this.reRender();
         }
         
         // Clean up chart when panel is removed
