@@ -22,7 +22,7 @@ class LogCallValidator
             $callDate = new \DateTime($data->callDateTime);
             $now = new \DateTime('now', new \DateTimeZone('UTC'));
     
-            if ($calldate > $now) {
+            if ($callDate > $now) {
                 throw new BadRequest('Gesprek datum/tijd mag niet in de toekomst zijn.');
             }
         }
@@ -37,6 +37,14 @@ class LogCallValidator
     
             if ($callAgain <= $now) {
                 throw new BadRequest('Datum/tijd opnieuw bellen moet in de toekomst zijn.');
+            }
+        }
+
+        if ($outcome === CallOutcome::INVITED->value) {
+            $allowed = ['kickstart', 'bws', 'spark', 'iom'];
+            $meetingType = $data->meetingType ?? '';
+            if ($meetingType === '' || !in_array($meetingType, $allowed, true)) {
+                throw new BadRequest('Type afspraak is verplicht en moet geldig zijn.');
             }
         }
     }

@@ -132,6 +132,26 @@
             "seeMoreDisabled": true,
             "readOnly": true,
             "isCustom": true
+        },
+        "cMeetingType": {
+            "type": "enum",
+            "options": [
+                "kickstart",
+                "bws",
+                "spark",
+                "iom"
+            ],
+            "required": false,
+            "isCustom": true,
+            "audited": true,
+            "label": "Type afspraak",
+            "style": {
+                "kickstart": null,
+                "bws": null,
+                "spark": null,
+                "iom": null
+            },
+            "default": "kickstart"
         }
     },
     "collection": {

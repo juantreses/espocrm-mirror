@@ -14,6 +14,18 @@
                     </select>
                 </div>
             </div>
+            <div class="col-md-6" data-field="meeting-type" style="display: none;">
+                <div class="form-group">
+                    <label>Type afspraak *</label>
+                    <select name="meetingType" class="form-control">
+                        <option value="">-- Selecteer type --</option>
+                        <option value="kickstart">Kickstart</option>
+                        <option value="bws">BWS (skin)</option>
+                        <option value="spark">SPARK</option>
+                        <option value="iom">IOM</option>
+                    </select>
+                </div>
+            </div>
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Gesprek datum/tijd</label>

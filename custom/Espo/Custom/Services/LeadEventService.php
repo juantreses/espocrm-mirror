@@ -111,6 +111,7 @@ class LeadEventService
         $eventDate = $data->callDateTime ?? null;
         $callAgainDateTime = $data->callAgainDateTime ?? null;
         $coachNote = $data->coachNote ?? null;
+        $meetingType = $data->meetingType ?? null;
 
         if (!isset(self::CALL_OUTCOME_EVENT_MAP[$outcome->value])) {
             throw new BadRequest('Invalid call outcome: ' . $outcome->value);
@@ -133,6 +134,15 @@ class LeadEventService
         if ($coachNote) {
             $source = 'Telefoon';
             $this->addCoachNote($leadId, $coachNote, $source, $eventDate);
+        }
+
+        // Persist meeting type on the Lead when invited
+        if ($outcome->value === CallOutcome::INVITED->value && $meetingType) {
+            $lead = $this->fetchLead($leadId);
+            if ($lead) {
+                $lead->set('cMeetingType', $meetingType);
+                $this->entityManager->saveEntity($lead);
+            }
         }
 
         return [

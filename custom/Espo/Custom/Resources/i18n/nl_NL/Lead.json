@@ -13,7 +13,8 @@
         "cCampagneRoundRobin": "Campagne Round Robin",
         "cExternalCreatedAt": "Vanko Aanmaakdatum",
         "cFollowUpAction": "Opvolgactie",
-        "cSurveyData": "Enquête"
+        "cSurveyData": "Enquête",
+        "cMeetingType": "Afspraak Type"
     },
     "links": {
         "cSlimFitCenter": "SlimFit-Center",
@@ -55,6 +56,12 @@
             "": "",
             "Mr.": "Dhr.",
             "Mrs.": "Mevr."
+        },
+        "cMeetingType": {
+            "kickstart": "Kickstart",
+            "bws": "Beauty Workshop",
+            "spark": "SPARK",
+            "iom": "IOM"
         }
     }
 }

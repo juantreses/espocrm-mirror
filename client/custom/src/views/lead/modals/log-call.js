@@ -26,13 +26,20 @@ define('custom:views/lead/modals/log-call', ['views/modal', 'custom:utils/date-u
             Dep.prototype.afterRender.call(this);
             const $outcome = this.$el.find('[name="outcome"]');
             const $callAgainField = this.$el.find('[data-field="call-again-date"]');
-            
+            const $meetingTypeField = this.$el.find('[data-field="meeting-type"]');
+
             $outcome.on('change', () => {
                 const value = $outcome.val();
                 if (value === 'call_again') {
                     $callAgainField.show();
                 } else {
                     $callAgainField.hide();
+                }
+
+                if (value === 'invited') {
+                    $meetingTypeField.show();
+                } else {
+                    $meetingTypeField.hide();
                 }
             });
         },
@@ -42,6 +49,7 @@ define('custom:views/lead/modals/log-call', ['views/modal', 'custom:utils/date-u
             const callDateTime = this.$el.find('[name="callDateTime"]').val();
             const callAgainDateTime = this.$el.find('[name="callAgainDateTime"]').val();
             const coachNote = this.$el.find('[name="coachNote"]').val();
+            const meetingType = this.$el.find('[name="meetingType"]').val();
 
             const saveButton = this.$el.find('button[data-name="save"]');
             saveButton.prop('disabled', true);
@@ -50,6 +58,14 @@ define('custom:views/lead/modals/log-call', ['views/modal', 'custom:utils/date-u
                 Espo.Ui.error('Selecteer een uitkomst.');
                 saveButton.prop('disabled', false);
                 return;
+            }
+
+            if (outcome === 'invited') {
+                if (!meetingType) {
+                    Espo.Ui.error('Type afspraak is verplicht voor een uitnodiging.');
+                    saveButton.prop('disabled', false);
+                    return;
+                }
             }
 
             if (outcome === 'call_again' && !callAgainDateTime) {
@@ -82,7 +98,8 @@ define('custom:views/lead/modals/log-call', ['views/modal', 'custom:utils/date-u
 		        outcome: outcome,
                 callDateTime: callDateTime ? DateUtils.toOffsetISOString(new Date(callDateTime)) : null,
                 callAgainDateTime: callAgainDateTime ? DateUtils.toOffsetISOString(new Date(callAgainDateTime)) : null,
-                coachNote: coachNote || null
+                coachNote: coachNote || null,
+                meetingType: meetingType || null
             }).then(() => {
                 this.trigger('success');
                 this.close();
