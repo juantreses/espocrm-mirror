@@ -15,21 +15,6 @@ use Espo\ORM\Repository\Option\SaveOption;
 class LeadFactory
 {
 
-    // Pay close attention to exact characters (like the en-dash '–' or non-breaking space ' ').
-    private const Q_HEALTH_SCORE = 'Hoe zou je je algemene gezondheid op dit moment beoordelen? (Schaal 1–10)';
-    private const Q_SPORT_TYPE = 'Welke sport oefen je uit?';
-    private const Q_FREE_EXPERIENCE = 'Ik selecteer per week 10 mensen voor één van onze gratis en vrijblijvende ervaringen in ons SFC. Welke zou jij het liefste volgen?';
-    private const Q_BREAKFAST = 'Wat had je vanmorgen als ontbijt?';
-    private const Q_5_RESULTS = 'Ik geef je 5 gezondheidsresultaten. Stel dat er één vanaf nu zou werken, welke zou je kiezen?';
-    private const Q_COACH_INFO = 'Wil je vrijblijvend meer info over hoe je een centje kan bijvrienden als welzijnscoach? ';
-    private const Q_GOALS = 'Welke van deze doelen spreken jou het meest aan?';
-    private const Q_SLEEP = 'Slaap je gemiddeld voldoende (7–9 uur per nacht)?';
-    private const Q_DO_SPORT = 'Doe je aan sport?';
-    private const Q_SPORT_HOURS = 'Hoeveel uur in de week sport je?';
-    private const Q_REMARK = 'Opmerking';
-    private const Q_WhatForSkin = 'Waar wil jij je huid het liefst in verbeteren?';
-    private const Q_WorkshopAvailability = 'Kun je de komende weken op zondagochtend tussen 10.00 en 12.00 meedoen aan de gratis workshop?';
-
     /**
      * Unified field mapping structure that supports both simple and fallback mappings.
      * For simple mappings, use a single-element array.
@@ -54,32 +39,24 @@ class LeadFactory
     ];
 
     /**
-     * Mapping of SlimFit Centers to their specific survey questions.
-     * Keys must match EXACTLY what is in the incoming JSON data, 
-     * including exact spacing and special characters (like non-breaking spaces).
+     * Keys must match EXACTLY what is in the incoming JSON data,
+     * Pay close attention to exact characters (like the en-dash '–' or non-breaking space ' ').
      */
     private const SURVEY_MAPPING = [
-        'Sint-Katelijne-Waver' => [
-            self::Q_BREAKFAST,
-            self::Q_HEALTH_SCORE,
-            self::Q_5_RESULTS,
-            self::Q_COACH_INFO,
-            self::Q_SPORT_TYPE,
-            self::Q_FREE_EXPERIENCE,
-            self::Q_REMARK,
-        ],
-        'Drongen' => [
-            self::Q_HEALTH_SCORE,
-            self::Q_GOALS,
-            self::Q_SLEEP,
-            self::Q_DO_SPORT,
-            self::Q_SPORT_HOURS,
-            self::Q_SPORT_TYPE,
-            self::Q_FREE_EXPERIENCE,
-            self::Q_REMARK,
-            self::Q_WhatForSkin,
-            self::Q_WorkshopAvailability,
-        ],
+        'Wat had je vanmorgen als ontbijt?',
+        'Hoe zou je je algemene gezondheid op dit moment beoordelen? (Schaal 1–10)',
+        'Ik geef je 5 gezondheidsresultaten. Stel dat er één vanaf nu zou werken, welke zou je kiezen?',
+        'Wil je vrijblijvend meer info over hoe je een centje kan bijvrienden als welzijnscoach? ',
+        'Welke sport oefen je uit?',
+        'Ik selecteer per week 10 mensen voor één van onze gratis en vrijblijvende ervaringen in ons SFC. Welke zou jij het liefste volgen?',
+        'Opmerking',
+        'Welke van deze doelen spreken jou het meest aan?',
+        'Slaap je gemiddeld voldoende (7–9 uur per nacht)?',
+        'Doe je aan sport?',
+        'Hoeveel uur in de week sport je?',
+        'Waar wil jij je huid het liefst in verbeteren?',
+        'Kun je de komende weken op zondagochtend tussen 10.00 en 12.00 meedoen aan de gratis workshop?',
+        'Zou je de komende weken willen meedoen met een groepsles, als het voor jou uitkomt?',
     ];
 
     public function __construct(
@@ -184,25 +161,11 @@ class LeadFactory
         }
     }
 
-    private function extractSurveyData(object $data): object
+    private function extractSurveyData(object $data): array
     {
         $surveyData = [];
-        
-        $center = isset($data->CC_SlimFitCenter) ? trim((string)$data->CC_SlimFitCenter) : '';
 
-        if ($center !== '' && array_key_exists($center, self::SURVEY_MAPPING)) {
-            $questionsToExtract = self::SURVEY_MAPPING[$center];
-        } else {
-            // Scenario B: Center is missing/unknown -> Look for ALL known questions
-            // We merge all arrays in SURVEY_MAPPING and remove duplicates
-            $allQuestions = [];
-            foreach (self::SURVEY_MAPPING as $centerQuestions) {
-                $allQuestions = array_merge($allQuestions, $centerQuestions);
-            }
-            $questionsToExtract = array_unique($allQuestions);
-        }
-
-        foreach ($questionsToExtract as $questionKey) {
+        foreach (self::SURVEY_MAPPING as $questionKey) {
             if (property_exists($data, $questionKey)) {
                 $answer = $data->$questionKey;
                 
@@ -218,13 +181,13 @@ class LeadFactory
             }
         }
 
-        return (object) $surveyData;
+        return $surveyData;
     }
 
     private function applySurveyData(Lead $lead, object $data): void
     {
         $surveyData = $this->extractSurveyData($data);
-        if (!empty((array)$surveyData)) {
+        if (!empty($surveyData)) {
             // Encode as a pretty-printed string for the TEXT field
             $jsonString = json_encode($surveyData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
             $lead->set('cSurveyData', $jsonString);
